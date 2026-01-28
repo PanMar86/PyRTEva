@@ -1,0 +1,321 @@
+import napari
+import pickle
+from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QBrush, QColor
+from gui.components import generate_report_tables
+from dicom_io.ct_series import load_ct_series
+from dicom_io.rt_struct import load_rt_structures
+from dicom_io.rt_dose import load_computed_dose
+from dicom_io.rt_plan import load_treatment_plan
+from dicom_io.validators import validate_directory_structure
+from computations.structures_masks import generate_structures_masks
+from computations.dose_maps import generate_dose_maps
+from computations.dose_volume_histograms import generate_dose_volume_histograms
+from visualization.anatomy_dose import generate_visualisation
+from visualization.dose_volume_histograms import plot_dose_volume_histograms
+from plan_evaluation.structures_identification import identify_structures
+from plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_conformance, evaluate_dosimetric_indices
+
+
+def load_patient_data(data_container, status_bar):
+    """
+    This function triggers the execution of the functions that load and validate all the patient-related DICOM data.
+    It uses a dictionary, acting as a (shared) data container, to store the corresponding data. Finally, the gui status
+    bar is updated to reflect the current loading stage.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+    """
+
+    patient_dir =  validate_directory_structure(QFileDialog.getExistingDirectory(None, "Select Patient Folder",
+                                                                                 data_container["PatientsDirectory"]))
+
+    update_status_bar(status_bar, "Patient data is being imported. Please wait...")
+
+    update_status_bar(status_bar, "CT series and series acquisition parameters are being imported. Please wait...")
+    ct_series, ct_series_acquisition_parameters = load_ct_series(patient_dir)
+    data_container["CTSeries"] = ct_series
+    data_container["SeriesAcquisitionParameters"] = ct_series_acquisition_parameters
+    update_status_bar(status_bar, "CT series and series acquisition parameters have been imported successfully.")
+
+    update_status_bar(status_bar, "RT structures are being imported. Please wait...")
+    structures = load_rt_structures(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
+    data_container["Structures"] = structures
+    update_status_bar(status_bar, "RT structures have been imported successfully.")
+
+    update_status_bar(status_bar, "Treatment plan is being imported. Please wait...")
+    treatment_plan = load_treatment_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
+    data_container["TreatmentPlan"] = treatment_plan
+    update_status_bar(status_bar, "Treatment plan has been imported successfully.")
+
+    update_status_bar(status_bar, "Computed dose is being imported...")
+    computed_dose = load_computed_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
+                                       data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
+    data_container["ComputedDose"] = computed_dose
+    update_status_bar(status_bar, "Computed dose has been successfully imported.")
+
+    update_status_bar(status_bar, "Patient data has been successfully imported.")
+
+    return None
+
+
+def generate_intermediate_data(data_container, function_settings_container, status_bar):
+    """
+    This function triggers the execution of the functions that generate all the necessary (intermediate) data required
+    both for visualization and plan assessment. They use the loaded, patient-related DICOM data to generate structure
+    masks, dose maps and dose volume histograms for all associated structures. Finally, the gui status bar is updated
+    to reflect the current data generation stage.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    function_settings_container : dict
+        Shared function settings container.
+
+    status_bar :qtpy.QtWidgets.QStatusBar
+        Status bar.
+    """
+
+    update_status_bar(status_bar, "Patient data processing has been initiated. Please wait...")
+
+    update_status_bar(status_bar, "Structures masks are being generated. Please wait...")
+    structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
+                                                 data_container["Structures"])
+    data_container["StructuresMasks"] = structures_masks
+    update_status_bar(status_bar, "Structures masks have been generated successfully.")
+
+    update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
+    dose_maps = generate_dose_maps(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
+                                   data_container["ComputedDose"], function_settings_container["InterpolationMethod"])
+    data_container["DoseMaps"] = dose_maps
+    update_status_bar(status_bar, "Dose maps have been generated successfully.")
+
+    update_status_bar(status_bar, "Dose volume histograms are being generated. Please wait...")
+    dose_volume_histograms = generate_dose_volume_histograms(data_container["SeriesAcquisitionParameters"], structures_masks,
+                                                             dose_maps, function_settings_container["DoseBinWidth"])
+    data_container["DoseVolumeHistograms"] = dose_volume_histograms
+    update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
+
+    update_status_bar(status_bar, "Patient data processing has been successfully completed.")
+
+    return None
+
+
+def display_visualisation(data_container, status_bar, visualisation_panel, visualization_mode, display_mode):
+    """
+    This function triggers the execution of the function that generates and configures a multi-layer Napari viewer. The
+    visualization and display modes dictate what type of layers (CT series, volumetric dose map, volumetric structure
+    mask, advanced visualization layer) are present on the viewer. The existing blank Napari viewer (acting as a
+    placeholder) is removed from the container panel and deleted, prior to the creation of the new instance. The viewer
+    is further customized via the "customize_viewer" function. Finally, the gui status bar is updated to reflect the
+    progress status.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+
+    visualisation_panel : qtpy.QtWidgets.QWidget
+        Container gui panel, where the napari viewer is embedded.
+
+    visualization_mode : str
+        Visualization mode.
+
+    display_mode : str
+        Display mode.
+    """
+
+    update_status_bar(status_bar, f"{display_mode} {visualization_mode} visualisation mode is being initialized. Please wait...")
+
+    temporary_content  = [child for child in visualisation_panel.children() if isinstance(child, napari._qt.qt_main_window._QtMainWindow)][0]
+    visualisation_panel.layout().removeWidget(temporary_content)
+    temporary_content.hide()
+    temporary_content.deleteLater()
+
+    viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
+                                    data_container["StructuresMasks"], data_container["DoseMaps"],
+                                    data_container["TreatmentPlan"]["PrescribedDose"], visualization_mode, display_mode)
+
+    customize_viewer(viewer)
+
+    viewer_qt_widget = viewer.window._qt_window
+    visualisation_panel.layout().addWidget(viewer_qt_widget)
+
+    update_status_bar(status_bar, f"{display_mode} {visualization_mode} visualisation mode has been enabled.")
+
+    return None
+
+
+def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
+    """
+    This function triggers the execution of the function that plots the generated dose volume histograms for all
+    associated structures. The existing QLabel (acting as a generic placeholder) is removed from the container panel and
+    deleted, prior to the creation of the dose volume histograms plot. Finally, the gui status bar is updated to reflect
+    the progress status.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+
+    dvh_panel : qtpy.QtWidgets.QWidget
+        Container gui panel, where the dose volume histograms plot is embedded.
+    """
+
+    update_status_bar(status_bar, "Dose volume histograms are being generated. Please wait...")
+
+    temporary_content = [child for child in dvh_panel.children() if isinstance(child, QLabel)][0]
+    dvh_panel.layout().removeWidget(temporary_content)
+    temporary_content.hide()
+    temporary_content.deleteLater()
+
+    dvhs_plot = plot_dose_volume_histograms(data_container["DoseVolumeHistograms"],
+                                            data_container["TreatmentPlan"]["PrescribedDose"])
+    dvh_panel.layout().addWidget(dvhs_plot)
+
+    update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
+
+    return None
+
+
+def display_evaluation_report(data_container, function_settings_container, status_bar, evaluation_panel):
+    """
+    This function triggers the execution of the functions that split the generated dose volume histograms (DVHs) into
+    three groups (corresponding to tumorous structures, OARs and OARs with at least one corresponding dose constraint
+    respectively), and evaluate the treatment plan based on a group of dosimetric indices, the dose conformance (with
+    respect to the tumorous structures) and the compliance with the associated dose constraints. The existing QLabel
+    (acting as a generic placeholder) is removed from the container panel and deleted, prior to the creation of the
+    evaluation report tables. Finally, the gui status bar is updated to reflect the progress status.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    function_settings_container : dict
+        Shared function settings container.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+
+    evaluation_panel : qtpy.QtWidgets.QWidget
+        Container gui panel, where the evaluation report tables are embedded.
+    """
+
+    update_status_bar(status_bar, "Plan evaluation report is being generated. Please wait...")
+
+    temporary_content = [child for child in evaluation_panel.children() if isinstance(child, QLabel)][0]
+    evaluation_panel.layout().removeWidget(temporary_content)
+    temporary_content.hide()
+    temporary_content.deleteLater()
+
+    with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constrains.pkl", mode="rb") as f:
+        dose_constraints = pickle.load(f)
+
+    structures_dvhs = identify_structures(data_container["DoseVolumeHistograms"], dose_constraints)
+    tumorous_structures_dvhs = structures_dvhs["TumorousStructuresDoseVolumeHistograms"]
+    oars_dvhs = structures_dvhs["OARsDoseVolumeHistograms"]
+    oars_with_constraints_dvhs = structures_dvhs["OARsWithConstraintsDoseVolumeHistograms"]
+
+    dosimetric_indices_evaluation = evaluate_dosimetric_indices(tumorous_structures_dvhs + oars_dvhs)
+    dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
+    dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
+                                                            data_container["TreatmentPlan"]["PrescribedDose"],
+                                                            function_settings_container["ReferenceIsodose"],
+                                                            tumorous_structures_dvhs, oars_dvhs)
+
+    report_tables_data = {"Dosimetric Indices" : dosimetric_indices_evaluation, "Dose Conformance" : dose_conformance_evaluation,
+                          "Dose Constraints" : dose_constraints, "Dose Constraints Evaluation" : dose_constraints_evaluation}
+
+    report_tables = generate_report_tables(report_tables_data)
+
+    # Insert plan evaluation results to the corresponding tables.
+    for table_name, table_data in report_tables_data.items():
+
+        table = report_tables.findChildren(QTableWidget, table_name)[0]
+        table.setHorizontalHeaderLabels(table_data.columns.tolist())
+
+        for row_index in range(table_data.shape[0]):
+
+            for col_index in range(table_data.shape[1]):
+
+                table_item_value = str(table_data.iloc[row_index, col_index])
+                table_item = QTableWidgetItem(table_item_value)
+                table_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table_item.setToolTip(table_item.text())
+
+                if "Pass" in table_item_value:
+
+                    table_item.setForeground(QBrush(QColor("green")))
+
+                elif "Fail" in table_item_value:
+
+                    table_item.setForeground(QBrush(QColor("red")))
+
+                table.setItem(row_index, col_index, table_item)
+
+    evaluation_panel.layout().addWidget(report_tables)
+
+    update_status_bar(status_bar, "Plan evaluation report has been successfully generated.")
+
+    return None
+
+
+def update_status_bar(status_bar, message):
+    """
+    This function updates the gui status bar with the provided message. It forces the gui to process events immediately
+    to ensure that the message is displayed properly.
+
+    Parameters
+    ----------
+    status_bar : QStatusBar
+        Status bar.
+
+    message : str
+        Message to be displayed.
+    """
+
+    status_bar.showMessage(message)
+    QApplication.processEvents()
+
+    return None
+
+
+def customize_viewer(viewer):
+    """
+    This function modifies the given Napari viewer to create a minimal, dark-themed version suitable for
+    gui-embedding. A series of control buttons are "deactivated" (hided) on purpose, so that there is no
+    signal matching due to the existence of two napari viewers, embedded on the gui.
+
+    Parameters
+    ----------
+    viewer : napari.viewer.Viewer
+        Napari viewer whose interface elements will be modified.
+    """
+
+    viewer.window._qt_window._qt_viewer.setStyleSheet("background-color:black; border: none")
+    viewer.window._qt_window.menuBar().setVisible(False)
+    viewer.window._qt_viewer.viewerButtons.setVisible(False)
+    viewer.window._qt_viewer.layerButtons.setVisible(False)
+
+    layers = viewer.layers
+    for layer in layers:
+        for widget in viewer.window._qt_viewer.controls.widgets[layer].children():
+            if type(widget) is napari._qt.widgets.qt_mode_buttons.QtModeRadioButton:
+                widget.setVisible(False)
+
+    return None
