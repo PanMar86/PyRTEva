@@ -89,7 +89,7 @@ Panagiotis Marentakis
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0. See the LICENCE and NOTICE files for details.
+This project is licensed under the Apache License, Version 2.0. See the LICENSE and NOTICE files for details.
 
 
 ## Disclaimer
