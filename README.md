@@ -1,7 +1,11 @@
 # PyRTEva
 
-PyRTEva is a Python-based toolkit designed to automate the evaluation of radiotherapy treatment plans, focusing on both target coverage and sparing of critical structures (OARs). The toolkit allows users to import DICOM RT data, explore anatomy and dose distributions both in 2D and 3D, compute common plan quality metrics, and automatically evaluate dose constraints based on clinical guidelines (RTOG, QUANTEC).
+![Static Badge](https://img.shields.io/badge/python-3.13-green)
+![Static Badge](https://img.shields.io/badge/napari-0.6.5-blue)
+![Static Badge](https://img.shields.io/badge/QtPy-2.4.3-yellow)
+![Static Badge](https://img.shields.io/badge/pytest-9.0.1-red)
 
+PyRTEva is a Python-based toolkit designed to automate the evaluation of radiotherapy treatment plans, focusing on both target coverage and sparing of critical structures (OARs). The toolkit allows users to import DICOM RT data, explore anatomy and dose distributions both in 2D and 3D, compute common plan quality metrics, and automatically evaluate dose constraints based on clinical guidelines (RTOG, QUANTEC).
 
 ## Features
 
