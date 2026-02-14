@@ -223,7 +223,7 @@ def display_evaluation_report(data_container, function_settings_container, statu
     temporary_content.hide()
     temporary_content.deleteLater()
 
-    with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constrains.pkl", mode="rb") as f:
+    with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constraints.pkl", mode="rb") as f:
         dose_constraints = pickle.load(f)
 
     structures_dvhs = identify_structures(data_container["DoseVolumeHistograms"], dose_constraints)
