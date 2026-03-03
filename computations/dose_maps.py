@@ -5,9 +5,9 @@ from scipy.interpolate import RegularGridInterpolator
 def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dose, interpolation_method):
     """
     This function generates planar and volumetric dose maps aligned to the CT series. Essentially, it evaluates the
-    spatial coincidence between the dose grid and the CT series. If the dose grid planes and the slices of the CT series
-    are perfectly coincident, no interpolation is performed. If they are coincident along the z-axis but not planar
-    aligned, 2D planar interpolation is performed (slice by slice) to generate dose maps aligned to the CT series.
+    spatial alignment between the dose grid and the CT series. If the dose grid planes and the slices of the CT series
+    are fully aligned, no interpolation is performed. If they are fully or partially aligned along the z-axis but not
+    planarly aligned, 2D planar interpolation is performed (slice by slice) to generate dose maps aligned to the CT series.
 
     Parameters
     ----------
@@ -39,16 +39,15 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
     Limitations
     -----------
-    - Only 2D planar interpolation is supported (when z-axis coincidence exists).
+    - Only 2D planar interpolation is supported (corresponding to full or partial z-axis alignment).
     """
 
     planar_alignment = verify_planar_alignment(ct_series_acquisition_parameters, computed_dose)
-    z_axis_coincidence = verify_z_axis_coincidence(ct_series, ct_series_acquisition_parameters, computed_dose)
-    perfect_coincidence= planar_alignment and z_axis_coincidence
+    z_axis_alignment = verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose)
 
-    if perfect_coincidence:
+    if planar_alignment and z_axis_alignment["Full"]:
 
-        print("The dose grid planes and the slices of the CT series are perfectly coincident.\n"
+        print("The dose grid planes and the slices of the CT series are fully aligned.\n"
               "Interpolation is not required.")
 
         volumetric_dose_map = np.zeros((len(ct_series), ct_series_acquisition_parameters["ImageDimensions"][0],
@@ -73,9 +72,9 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
         dose_maps = {"PlanarDoseMaps": planar_dose_maps,
                      "VolumetricDoseMap": volumetric_dose_map}
 
-    elif z_axis_coincidence:
+    elif z_axis_alignment["Full"] or z_axis_alignment["Partial"]:
 
-        print("The dose grid planes and the slices of the CT series are z-axis coincident.\n"
+        print("The dose grid planes and the slices of the CT series are fully or partially z-axis aligned.\n"
               "Planar (2D) interpolation is being performed. Please wait...")
 
         volumetric_dose_map = np.zeros((len(ct_series), ct_series_acquisition_parameters["ImageDimensions"][0],
@@ -121,11 +120,11 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
                      "VolumetricDoseMap": volumetric_dose_map}
 
     elif planar_alignment:
-        raise ValueError("The dose grid planes and the slices of the CT series are planar aligned but not z-axis coincident.\n"
+        raise ValueError("The dose grid planes and the slices of the CT series are planarly but not z-axis aligned.\n"
                          "Volume (3D) interpolation is not supported.")
 
     else:
-        raise ValueError("The dose grid planes and the slices of the CT series are neither planar aligned nor z-axis coincident.\n"
+        raise ValueError("The dose grid planes and the slices of the CT series are neither planarly nor z-axis aligned.\n"
                          "Volume (3D) interpolation is not supported.")
 
     return dose_maps
@@ -133,7 +132,7 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
 def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
     """
-    This function checks whether the dose grid planes are planar aligned with the slices of the CT series. It explicitly
+    This function checks whether the dose grid planes are planarly aligned with the slices of the CT series. It explicitly
     checks properties such as plane origin, in-plane spacing and plane dimensions.
 
     Parameters
@@ -148,28 +147,28 @@ def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
     Returns
     -------
     planar_alignment : bool
-        True if the dose grid planes and the slices of the CT series are planar aligned, False otherwise.
+        True if the dose grid planes and the slices of the CT series are planarly aligned, False otherwise.
     """
 
-    origin_check = np.allclose(ct_series_acquisition_parameters["ImagePlanarPositionPatient"],
-                               computed_dose["DoseGridPositionPatient"][0:2], rtol = 0, atol = 0.01)
+    origin_equality = np.allclose(ct_series_acquisition_parameters["ImagePlanarPositionPatient"],
+                                  computed_dose["DoseGridPositionPatient"][0:2], rtol = 0, atol = 0.01)
 
-    in_plane_spacing_check = np.allclose(ct_series_acquisition_parameters["PixelSpacing"],
-                                         computed_dose["DoseGridPlanarSpacing"], rtol = 0, atol = 0.01)
+    in_plane_spacing_equality = np.allclose(ct_series_acquisition_parameters["PixelSpacing"],
+                                            computed_dose["DoseGridPlanarSpacing"], rtol = 0, atol = 0.01)
 
-    dimensions_check = ct_series_acquisition_parameters["ImageDimensions"] == computed_dose["DoseGridPlanarDimensions"]
+    dimensions_equality = ct_series_acquisition_parameters["ImageDimensions"] == computed_dose["DoseGridPlanarDimensions"]
 
-    planar_alignment = origin_check and in_plane_spacing_check and dimensions_check
+    planar_alignment = origin_equality and in_plane_spacing_equality and dimensions_equality
 
     return planar_alignment
 
 
-def verify_z_axis_coincidence(ct_series, ct_series_acquisition_parameters, computed_dose):
+def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose):
     """
-    This function checks whether the dose grid planes are z-axis coincident with the slices of the CT series (planar
-    alignment is assessed via verify_planar_alignment function). It performs multiple consistency checks including
-    boundary coincidence check, dose grid plane spacing and CT series slice spacing comparison, and equality check
-    between the number of dose grid planes and the number of the slices of the CT series.
+    This function checks whether the dose grid planes are fully or partially z-axis aligned with the slices of the CT
+    series (planar alignment is assessed via verify_planar_alignment function). It performs multiple consistency checks
+    including dose grid and CT series z spacing equality check, number of dose grid planes and number of CT series slices
+    equality check, etc.
 
     Parameters
     ----------
@@ -185,42 +184,75 @@ def verify_z_axis_coincidence(ct_series, ct_series_acquisition_parameters, compu
 
     Returns
     -------
-    z_axis_coincidence : bool
-        True if the dose grid planes are coincident with the slices of the CT series along the z-axis, False otherwise.
+    z_axis_alignment : dict
+        Dictionary containing information regarding z axis alignment. The dictionary contains:
+        - "Full" : bool
+            True in case of full z axis alignment, False otherwise.
+        - "Partial" : bool
+            True in case of partial z axis alignment, False otherwise.
     """
 
-    # Determine the type of the DoseGridFrameOffsetVector
-    # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
+    z_axis_alignment = {"Full" : False, "Partial" : False}
 
-    if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
+    # Check if the z-spacing between the dose grid planes is constant and equal to the spacing between the slices of the CT series.
+    z_axis_spacing_equality = verify_z_axis_spacing_equality(computed_dose["DoseGridFrameOffsetVector"], ct_series_acquisition_parameters)
 
-        # Check if the first plane of the dose grid is z-axis coincident with the first or the last slice of the CT series.
-        boundary_coincidence_check = np.allclose(computed_dose["DoseGridPositionPatient"][2],
-                                                 ct_series[-1]["ImagePositionPatient"][2], rtol = 0, atol = 0.01) or \
-                                     np.allclose(computed_dose["DoseGridPositionPatient"][2],
-                                                 ct_series[0]["ImagePositionPatient"][2], rtol = 0, atol = 0.01)
+    if not z_axis_spacing_equality:
 
-        # Check if the z-spacing between the dose planes is constant and equal to the spacing between the slices of the
-        # CT series.
-        z_axis_spacing_coincidence_check = verify_z_axis_spacing_coincidence(computed_dose["DoseGridFrameOffsetVector"],
-                                                                             ct_series_acquisition_parameters)
+        return z_axis_alignment
 
-        # Check if the number of the slices of the CT series is equal to the number of dose grid planes.
-        slices_frames_check = len(ct_series) == computed_dose["DoseGridFrames"]
+    else:
 
-        z_axis_coincidence = boundary_coincidence_check and z_axis_spacing_coincidence_check and slices_frames_check
+        # Check if at least one dose grid plane coincides with a slice of the CT series (partial z axis alignment).
 
-    elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
+        ct_slices_z_position = np.array([ct_slice["ImagePositionPatient"][2] for ct_slice in ct_series])
 
-        slices_z_axis_position = sorted([x["ImagePositionPatient"][2] for x in ct_series])
-        dose_planes_z_axis_position = sorted(computed_dose["DoseGridFrameOffsetVector"])
+        # Determine the type of the DoseGridFrameOffsetVector
+        # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
 
-        z_axis_coincidence = slices_z_axis_position == dose_planes_z_axis_position
+        if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
 
-    return z_axis_coincidence
+            dose_grid_planes_z_position = np.array(computed_dose["DoseGridFrameOffsetVector"]) + computed_dose["DoseGridPositionPatient"][2]
+
+        elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
+
+            dose_grid_planes_z_position = np.array(computed_dose["DoseGridFrameOffsetVector"])
+
+        for dose_grid_plane_z_position in dose_grid_planes_z_position:
+
+            if np.any(np.isclose(dose_grid_plane_z_position, ct_slices_z_position, rtol=0, atol=0.01)):
+
+                z_axis_alignment["Partial"] = True
+
+                break
+
+        if not z_axis_alignment["Partial"]:
+
+            return z_axis_alignment
+
+        else:
+
+            # Check for full z axis alignment.
+
+            # Check if the number of the slices of the CT series is equal to the number of the dose grid planes.
+            ct_slices_dose_grid_planes_equality = len(ct_series) == computed_dose["DoseGridFrames"]
+
+            if not ct_slices_dose_grid_planes_equality:
+
+                return z_axis_alignment
+
+            else:
+
+                if (np.allclose(ct_slices_z_position, dose_grid_planes_z_position, rtol=0, atol=0.01) or
+                        np.allclose(ct_slices_z_position, np.flip(dose_grid_planes_z_position), rtol=0, atol=0.01)):
+
+                    z_axis_alignment["Full"] = True
+                    z_axis_alignment["Partial"] = False
+
+                return  z_axis_alignment
 
 
-def verify_z_axis_spacing_coincidence(grid_frame_offset_vector, ct_series_acquisition_parameters):
+def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisition_parameters):
     """
     This function checks whether the spacing between dose grid planes (as defined by the GridFrameOffsetVector parameter)
     is constant and matches the spacing between the slices of the CT series.
@@ -235,7 +267,7 @@ def verify_z_axis_spacing_coincidence(grid_frame_offset_vector, ct_series_acquis
 
     Returns
     -------
-    z_axis_spacing_coincidence : bool
+    z_axis_spacing_equality : bool
         True if the spacing between all consecutive dose grid planes is constant and equal to the spacing between the
         slices of the CT series, False otherwise.
     """
@@ -246,24 +278,24 @@ def verify_z_axis_spacing_coincidence(grid_frame_offset_vector, ct_series_acquis
     # Check if the spacing between the dose grid planes is constant.
     constant_spacing = np.allclose(offsets_differences, offsets_differences[0], rtol = 0, atol = 0.01)
 
-    # Provided that the spacing between the dose grid planes is constant,
-    # check if it is equal to the spacing between the slices of the CT series.
+    # Provided that the spacing between the dose grid planes is constant, check if it is equal to the spacing between
+    # the slices of the CT series.
+
     if constant_spacing:
 
-        if np.allclose(np.abs(offsets_differences[0]), ct_series_acquisition_parameters["SpacingBetweenSlices"],
-                       rtol = 0, atol = 0.01):
+        if np.allclose(np.abs(offsets_differences[0]), ct_series_acquisition_parameters["SpacingBetweenSlices"], rtol = 0, atol = 0.01):
 
-            z_axis_spacing_coincidence = True
+            z_axis_spacing_equality = True
 
         else:
 
-            z_axis_spacing_coincidence = False
+            z_axis_spacing_equality = False
 
     else:
 
         raise ValueError("Dose grid plane spacing is not constant. Non constant plane spacing is not supported.")
 
-    return z_axis_spacing_coincidence
+    return z_axis_spacing_equality
 
 
 def planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_frame_index, interpolation_method):
