@@ -13,8 +13,8 @@ def load_treatment_plan(patient_dir_path, ct_series_frame_of_reference_uid):
         Path to the patient's directory containing an "RTPLAN" subdirectory with the DICOM RTPLAN file.
 
     ct_series_frame_of_reference_uid : str
-        Unique identifier of the CT series' frame of reference. Used to verify that treatment plan parameters refer to
-        the same coordinate system.
+        Unique identifier of the patient's coordinate system, associated with the CT series. Used to verify that the
+        treatment plan parameters refer to the same coordinate system.
 
     Returns
     -------
@@ -24,12 +24,6 @@ def load_treatment_plan(patient_dir_path, ct_series_frame_of_reference_uid):
             Prescribed dose, expressed in Gy.
         - "NumberOfFractions" : int
             Planned number of treatment fractions.
-
-    Limitations
-    -----------
-    - Plans with multiple fraction groups are not supported.
-    - Boost plans or adaptive plans are not supported.
-    - Multiple RTPLAN files within the same directory are not supported.
     """
 
     treatment_plan_dir = os.path.join(patient_dir_path, "RTPLAN")

@@ -16,8 +16,8 @@ def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
         Path to the patient directory containing an "RTSTRUCT" subdirectory with the DICOM RTSTRUCT file.
 
     ct_series_frame_of_reference_uid : str
-        Unique identifier of the CT series' frame of reference. Used to verify that the contour points coordinates of
-        the various structures refer το the same coordinate system.
+        Unique identifier of the patient's coordinate system, associated with the CT series. Used to verify that the
+        contour points coordinates of the various structures refer το the same coordinate system.
 
     Returns
     -------
@@ -33,10 +33,6 @@ def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
                 N x 3 array of X, Y and Z coordinates, with respect to the patient's coordinate system, expressed in mm.
             - "ReferencedSOPInstanceUID" : str
                 Unique identifier of the slice to which this contour corresponds.
-
-    Limitations
-    -----------
-    - Multiple RTSTRUCT files within the same directory are not supported.
     """
 
     structures_dir = os.path.join(patient_dir_path, "RTSTRUCT")

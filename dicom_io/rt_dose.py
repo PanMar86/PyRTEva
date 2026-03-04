@@ -15,12 +15,12 @@ def load_computed_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_se
         Path to the patient's directory containing an "RTDOSE" subdirectory with the DICOM RTDOSE file.
 
     ct_series_frame_of_reference_uid : str
-        Unique identifier of the CT series' frame of reference. Used to verify that the dose grid origin is expressed
-        with regards to the same coordinate system.
+        Unique identifier of the patient's coordinate system, associated with the CT series. Used to verify that the
+        dose grid origin is expressed with regards to the same coordinate system.
 
     ct_series_orientation : list of float
-        Spatial orientation of the CT series. Used to verify that the dose grid has the same spatial orientation as the
-        CT series.
+        CT series spatial orientation, with respect to the patient's coordinate system. Used to verify that the dose
+        grid has the same spatial orientation as the CT series.
 
     Returns
     -------
@@ -36,34 +36,28 @@ def load_computed_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_se
         - "DoseUnits" : str
             Units of dose (e.g., Gy, cGy).
         - "DoseGridPlanarDimensions" : list of int
-            Number of rows and columns of each dose grid slice.
+            Number of rows and columns of each dose grid plane.
         - "DoseGridFrames" : int
-            Number of frames (slices) of the dose grid.
+            Number of frames (planes) of the dose grid.
         - "DoseGridPlanarSpacing" : list of float
             In-plane pixel spacing, expressed in mm.
         - "DoseGridFrameOffsetVector" : list of float
-            Offsets along the z-axis for each dose grid slice.
+            Offsets along the z-axis for each dose grid plane.
         - "DoseGridOrientationPatient" : list of float
             Spatial Orientation of the dose grid, with respect to the patient's coordinate system.
         - "DoseGridPositionPatient" : list of float
-            X, Y and Z coordinates of the upper-left pixel of the first dose grid slice, with respect to the patient's
+            X, Y and Z coordinates of the upper-left pixel of the first dose grid plane, with respect to the patient's
             coordinate system, expressed in mm.
 
     Assumptions
     -----------
-    - The dicom_data attribute DoseGridScaling is present.
     - Dose is expressed in Gy units.
     - Dose refers to absorbed physical dose.
-    - The dose distribution corresponds to a completed treatment plan
-      (DICOM attribute DoseSummationType is equal to "PLAN")
+    - The dose distribution corresponds to a completed treatment plan (DICOM attribute DoseSummationType is equal to "PLAN").
 
     Limitations
     -----------
-    - Dose expressed in units other than Gy is not supported.
-    - Dose types other than absorbed physical dose are not supported.
-    - Dose summation not based on a completed plan is not supported.
     - Dose grids that don't have the same spatial orientation as the CT series are not supported.
-    - Multiple RTDOSE files within the same directory are not supported.
     """
 
     computed_dose_dir = os.path.join(patient_dir_path, "RTDOSE")
@@ -89,8 +83,8 @@ def load_computed_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_se
 
     if not np.allclose(computed_dose.ImageOrientationPatient, ct_series_orientation, rtol = 0, atol = 0.01):
 
-        raise ValueError("There was an orientation mismatch. Dose grids that have different orientation than the CT series"
-                         " are not supported.")
+        raise ValueError("There was an orientation mismatch. Dose grids that have different spatial orientation than\n"
+                         "the CT series are not supported.")
 
     computed_dose_distribution = np.array(computed_dose.pixel_array * computed_dose.DoseGridScaling, dtype = np.float64)
 

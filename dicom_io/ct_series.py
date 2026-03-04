@@ -31,7 +31,7 @@ def load_ct_series(patient_dir_path):
         - "ImageDimensions" : list of int
             Number of rows and columns of each slice.
         - "ImagePlanarPositionPatient" : list of float
-            X and Y coordinates of the slice's upper-left pixel, with respect to the patient's coordinate system,
+            X and Y coordinates of each slice's upper-left pixel, with respect to the patient's coordinate system,
             expressed in mm.
         - "PixelSpacing" : list of float
             In-plane pixel spacing, expressed in mm.
@@ -40,16 +40,15 @@ def load_ct_series(patient_dir_path):
         - "ImageOrientationPatient" : list of float
             CT series spatial orientation, with respect to the patient's coordinate system.
         - "FrameOfReferenceUID" : str
-            Unique identifier of the CT series' frame of reference
+            Unique identifier of the patient's coordinate system.
         - "SpacingBetweenSlices" : float
             Spacing between adjacent slices, expressed in mm.
 
     Limitations
     -----------
-    - Slice spatial orientations that do not correspond to HFS patient positioning with zero gantry tilt, are not
+    - CT series spatial orientations that do not correspond to HFS patient positioning with zero gantry tilt, are not
       supported.
-    - Slices that are not adjacent to each other are not supported.
-    - Multiple CT series within the same directory are not supported.
+    - CT series consisting of slices that are not adjacent to each other is not supported.
     """
 
     ct_series_dir = os.path.join(patient_dir_path, "CT")
@@ -82,9 +81,11 @@ def load_ct_series(patient_dir_path):
                                         "PixelSpacing" : ct_slice.PixelSpacing,
                                         "SliceThickness" : ct_slice.SliceThickness,
                                         "ImageOrientationPatient" : ct_slice.ImageOrientationPatient,
+                                        "PatientPosition" : ct_slice.PatientPosition,
                                         "FrameOfReferenceUID" : ct_slice.FrameOfReferenceUID}
 
     # Check if SpacingBetweenSlices attribute is present.
+
     if "SpacingBetweenSlices" in ct_slice.dir():
 
         ct_series_acquisition_parameters["SpacingBetweenSlices"] = ct_slice.SpacingBetweenSlices
@@ -94,7 +95,7 @@ def load_ct_series(patient_dir_path):
         # Calculate the spacing between adjacent slices.
         spacing_between_slices = np.diff([x["ImagePositionPatient"][2] for x in ct_series])
 
-        # Check if spacing between adjacent slices is constant
+        # Check if spacing between adjacent slices is constant.
         constant_spacing = np.allclose(spacing_between_slices, spacing_between_slices[0], rtol = 0, atol = 0.01)
 
         if constant_spacing:
@@ -103,9 +104,10 @@ def load_ct_series(patient_dir_path):
 
         else:
 
-            raise ValueError("Slice spacing is not constant. Non constant slice spacing is not supported.")
+            raise ValueError("CT series of non constant slice spacing is not supported.")
 
     # Check if the CT series consists of adjacent slices.
+
     if not np.allclose(ct_series_acquisition_parameters["SliceThickness"],
                        ct_series_acquisition_parameters["SpacingBetweenSlices"], rtol = 0, atol = 0.01):
 
@@ -114,11 +116,10 @@ def load_ct_series(patient_dir_path):
     # Check if the CT series spatial orientation corresponds to HFS patient positioning with zero gantry tilt.
     hfs_slice_orientation = [1, 0, 0, 0, 1, 0]
 
-    if not np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], hfs_slice_orientation,
-                       rtol = 0, atol = 0.01):
+    if not (np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], hfs_slice_orientation, rtol = 0, atol = 0.01) and
+            ct_series_acquisition_parameters["PatientPosition"] == "HFS"):
 
-        raise ValueError(f"ImageOrientationPatient = {ct_series_acquisition_parameters["ImageOrientationPatient"]} != {hfs_slice_orientation}\n"
-                          "Only the slice orientation that corresponds to HFS patient positioning with zero gantry tilt "
-                          "is supported.")
+        raise ValueError("Only the CT series spatial orientation that corresponds to HFS patient positioning\n"
+                         "with zero gantry tilt is supported.")
 
     return ct_series, ct_series_acquisition_parameters
