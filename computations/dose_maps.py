@@ -6,8 +6,9 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
     """
     This function generates planar and volumetric dose maps aligned to the CT series. Essentially, it evaluates the
     spatial alignment between the dose grid and the CT series. If the dose grid planes and the slices of the CT series
-    are fully aligned, no interpolation is performed. If they are fully or partially aligned along the z-axis but not
-    planarly aligned, 2D planar interpolation is performed (slice by slice) to generate dose maps aligned to the CT series.
+    are planarly and z axis (fully or partially) aligned, no interpolation is performed. If they are fully or partially
+    aligned along the z-axis but not planarly aligned, 2D planar interpolation is performed (slice by slice) to generate
+    dose maps aligned to the CT series.
 
     Parameters
     ----------
@@ -39,95 +40,109 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
     Limitations
     -----------
-    - Only 2D planar interpolation is supported (corresponding to full or partial z-axis alignment).
+    - Only 2D planar interpolation is currently supported (corresponding to full or partial z-axis alignment).
     """
 
+    # Determine the alignment type (if any).
     planar_alignment = verify_planar_alignment(ct_series_acquisition_parameters, computed_dose)
     z_axis_alignment = verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose)
 
-    if planar_alignment and z_axis_alignment["Full"]:
+    if planar_alignment and (not z_axis_alignment):
 
-        print("The dose grid planes and the slices of the CT series are fully aligned.\n"
-              "Interpolation is not required.")
+        raise ValueError("The dose grid and the CT series are planarly aligned but not z axis aligned.\n"
+                         "Volume (3D) interpolation is not currently supported.")
 
+    elif not planar_alignment and (not z_axis_alignment):
+
+        raise ValueError("The dose grid and the CT series are neither planarly nor z axis aligned.\n"
+                         "Volume (3D) interpolation is not currently supported.")
+
+    elif z_axis_alignment:
+
+        # Match the slices of the CT series with the corresponding dose grid planes. In case of no associated dose grid
+        # plane, a dose map corresponding to zero dose is applied.
+
+        ct_slices_z_positions = np.array([ct_slice["ImagePositionPatient"][2] for ct_slice in ct_series])
+
+        # Determine the type of the DoseGridFrameOffsetVector.
+        # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
+
+        if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
+
+            dose_grid_planes_z_positions = (np.array(computed_dose["DoseGridFrameOffsetVector"]) +
+                                            computed_dose["DoseGridPositionPatient"][2])
+
+        elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
+
+            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"])
+
+        # For each slice of the CT series, store the index of the corresponding dose grid plane. An index value of -1
+        # shows the absense of a dose grid plane for this particular slice.
+        dose_grid_planes_indices = -1 * np.ones(len(ct_series), dtype=np.int16)
+
+        for ct_slice_index in range(len(ct_series)):
+
+            if np.any(np.isclose(ct_slices_z_positions[ct_slice_index], dose_grid_planes_z_positions, rtol=0, atol=0.01)):
+
+                dose_grid_planes_indices[ct_slice_index] = np.argmax(np.isclose(ct_slices_z_positions[ct_slice_index],
+                                                                                dose_grid_planes_z_positions, rtol=0, atol=0.01))
+
+        # Construct the planar and the volumetric dose maps.
         volumetric_dose_map = np.zeros((len(ct_series), ct_series_acquisition_parameters["ImageDimensions"][0],
-                                        ct_series_acquisition_parameters["ImageDimensions"][1]), dtype = np.float64)
-
+                                        ct_series_acquisition_parameters["ImageDimensions"][1]), dtype=np.float64)
+        planar_dose_map = np.zeros((ct_series_acquisition_parameters["ImageDimensions"][0],
+                                    ct_series_acquisition_parameters["ImageDimensions"][1]), dtype=np.float64)
         planar_dose_maps = []
 
-        for grid_frame_index in range(computed_dose["DoseGridFrames"]):
+        if planar_alignment:
 
-            if computed_dose["DoseGridPositionPatient"][2] == ct_series[-1]["ImagePositionPatient"][2]:
+            # The dose grid planes and the slices of the CT series are planarly aligned and z axis (partially or fully)
+            # aligned. Interpolation is not required.
 
-                planar_dose_maps.append({"DoseMap": computed_dose["ScaledDoseArray"][grid_frame_index, :, :],
-                                         "ReferencedSOPInstanceUID": ct_series[-1 - grid_frame_index]["SOPInstanceUID"]})
-                volumetric_dose_map[-1 - grid_frame_index, :, :] = computed_dose["ScaledDoseArray"][grid_frame_index, :, :]
+            for ct_slice_index in range(len(ct_series)):
 
-            elif computed_dose["DoseGridPositionPatient"][2] == ct_series[0]["ImagePositionPatient"][2]:
+                if dose_grid_planes_indices[ct_slice_index] != -1:
 
-                planar_dose_maps.append({"DoseMap": computed_dose["ScaledDoseArray"][grid_frame_index, :, :],
-                                         "ReferencedSOPInstanceUID": ct_series[grid_frame_index]["SOPInstanceUID"]})
-                volumetric_dose_map[grid_frame_index, :, :] = computed_dose["ScaledDoseArray"][grid_frame_index, :, :]
+                    planar_dose_maps.append({"DoseMap": computed_dose["ScaledDoseArray"][dose_grid_planes_indices[ct_slice_index], :, :],
+                                             "ReferencedSOPInstanceUID": ct_series[ct_slice_index]["SOPInstanceUID"]})
+                    volumetric_dose_map[ct_slice_index, :, :] = computed_dose["ScaledDoseArray"][dose_grid_planes_indices[ct_slice_index], :, :]
+
+                else:
+
+                    planar_dose_maps.append({"DoseMap": planar_dose_map,
+                                             "ReferencedSOPInstanceUID": ct_series[ct_slice_index]["SOPInstanceUID"]})
+
+        elif not planar_alignment:
+
+            # The dose grid planes and the slices of the CT series are z-axis aligned (partially or fully). Planar (2D)
+            # interpolation will be performed.
+
+            # Map the upper-left pixel of the dose grid planes (origin) to the slices of the CT series.
+            dose_grid_plane_origin_slice_coordinates = [np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][1] -
+                                                                         computed_dose["DoseGridPositionPatient"][1]) /
+                                                                         ct_series_acquisition_parameters["PixelSpacing"][0]), decimals=0).astype(np.uint16),
+                                                        np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][0] -
+                                                                         computed_dose["DoseGridPositionPatient"][0]) /
+                                                                         ct_series_acquisition_parameters["PixelSpacing"][1]), decimals=0).astype(np.uint16)]
+
+            for ct_slice_index in range(len(ct_series)):
+
+                if dose_grid_planes_indices[ct_slice_index] != -1:
+
+                    # Perform 2D (planar) interpolation, so that the spatial resolution of the dose grid planes matches
+                    # the spatial resolution of the slices of the CT series.
+                    resampled_dose_grid_plane = planar_interpolation(ct_series_acquisition_parameters, computed_dose, dose_grid_planes_indices[ct_slice_index], interpolation_method)
+                    planar_dose_map[dose_grid_plane_origin_slice_coordinates[0] : dose_grid_plane_origin_slice_coordinates[0] + resampled_dose_grid_plane.shape[0],
+                                    dose_grid_plane_origin_slice_coordinates[1] : dose_grid_plane_origin_slice_coordinates[1] + resampled_dose_grid_plane.shape[1]] = resampled_dose_grid_plane
+
+                planar_dose_maps.append({"DoseMap": planar_dose_map, "ReferencedSOPInstanceUID" : ct_series[ct_slice_index]["SOPInstanceUID"]})
+                volumetric_dose_map[ct_slice_index, :, :] = planar_dose_map
+
 
         dose_maps = {"PlanarDoseMaps": planar_dose_maps,
                      "VolumetricDoseMap": volumetric_dose_map}
 
-    elif z_axis_alignment["Full"] or z_axis_alignment["Partial"]:
-
-        print("The dose grid planes and the slices of the CT series are fully or partially z-axis aligned.\n"
-              "Planar (2D) interpolation is being performed. Please wait...")
-
-        volumetric_dose_map = np.zeros((len(ct_series), ct_series_acquisition_parameters["ImageDimensions"][0],
-                                        ct_series_acquisition_parameters["ImageDimensions"][1]), dtype = np.float64)
-        planar_dose_maps = []
-
-        # Map the upper-left pixel of the dose grid planes (origin) to the slices of the CT series.
-        dose_grid_plane_origin_slice_coordinates = [np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][1] -
-                                                                     computed_dose["DoseGridPositionPatient"][1]) /
-                                                                    ct_series_acquisition_parameters["PixelSpacing"][0]), decimals = 0).astype(np.uint16),
-                                                    np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][0] -
-                                                                     computed_dose["DoseGridPositionPatient"][0]) /
-                                                                    ct_series_acquisition_parameters["PixelSpacing"][1]), decimals = 0).astype(np.uint16)]
-
-        for grid_frame_index in range(computed_dose["DoseGridFrames"]):
-
-            planar_dose_map = np.zeros((ct_series_acquisition_parameters["ImageDimensions"][0],
-                                        ct_series_acquisition_parameters["ImageDimensions"][1]), dtype = np.float64)
-
-            # Perform 2D (planar) interpolation, so that the spatial resolution of the dose grid planes matches the spatial
-            # resolution of the slices of the CT series.
-            resampled_dose_grid_plane = planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_frame_index, interpolation_method)
-            planar_dose_map[dose_grid_plane_origin_slice_coordinates[0] :
-                            dose_grid_plane_origin_slice_coordinates[0] +
-                            resampled_dose_grid_plane.shape[0],
-                            dose_grid_plane_origin_slice_coordinates[1] :
-                            dose_grid_plane_origin_slice_coordinates[1] +
-                            resampled_dose_grid_plane.shape[1]] = resampled_dose_grid_plane
-
-            if computed_dose["DoseGridPositionPatient"][2] == ct_series[-1]["ImagePositionPatient"][2]:
-
-                planar_dose_maps.append({"DoseMap": planar_dose_map,
-                                         "ReferencedSOPInstanceUID" : ct_series[-1 - grid_frame_index]["SOPInstanceUID"]})
-                volumetric_dose_map[-1 - grid_frame_index, :, :] = planar_dose_map
-
-            elif computed_dose["DoseGridPositionPatient"][2] == ct_series[0]["ImagePositionPatient"][2]:
-
-                planar_dose_maps.append({"DoseMap": planar_dose_map,
-                                         "ReferencedSOPInstanceUID" : ct_series[grid_frame_index]["SOPInstanceUID"]})
-                volumetric_dose_map[grid_frame_index, :, :] = planar_dose_map
-
-        dose_maps = {"PlanarDoseMaps": planar_dose_maps,
-                     "VolumetricDoseMap": volumetric_dose_map}
-
-    elif planar_alignment:
-        raise ValueError("The dose grid planes and the slices of the CT series are planarly but not z-axis aligned.\n"
-                         "Volume (3D) interpolation is not supported.")
-
-    else:
-        raise ValueError("The dose grid planes and the slices of the CT series are neither planarly nor z-axis aligned.\n"
-                         "Volume (3D) interpolation is not supported.")
-
-    return dose_maps
+        return dose_maps
 
 
 def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
@@ -165,10 +180,9 @@ def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
 
 def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose):
     """
-    This function checks whether the dose grid planes are fully or partially z-axis aligned with the slices of the CT
-    series (planar alignment is assessed via verify_planar_alignment function). It performs multiple consistency checks
-    including dose grid and CT series z spacing equality check, number of dose grid planes and number of CT series slices
-    equality check, etc.
+    This function checks whether the dose grid planes are z-axis aligned with the slices of the CT series (planar
+    alignment is assessed via verify_planar_alignment function). It performs multiple consistency checks including dose
+    grid and CT series z spacing equality check, number of dose grid planes and number of CT series slices equality check, etc.
 
     Parameters
     ----------
@@ -184,15 +198,11 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, compute
 
     Returns
     -------
-    z_axis_alignment : dict
-        Dictionary containing information regarding z axis alignment. The dictionary contains:
-        - "Full" : bool
-            True in case of full z axis alignment, False otherwise.
-        - "Partial" : bool
-            True in case of partial z axis alignment, False otherwise.
+    z_axis_alignment : bool
+        True in case of alignment, False otherwise.
     """
 
-    z_axis_alignment = {"Full" : False, "Partial" : False}
+    z_axis_alignment = False
 
     # Check if the z-spacing between the dose grid planes is constant and equal to the spacing between the slices of the CT series.
     z_axis_spacing_equality = verify_z_axis_spacing_equality(computed_dose["DoseGridFrameOffsetVector"], ct_series_acquisition_parameters)
@@ -203,53 +213,30 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, compute
 
     else:
 
-        # Check if at least one dose grid plane coincides with a slice of the CT series (partial z axis alignment).
-
-        ct_slices_z_position = np.array([ct_slice["ImagePositionPatient"][2] for ct_slice in ct_series])
+        ct_slices_z_positions = np.array([ct_slice["ImagePositionPatient"][2] for ct_slice in ct_series])
 
         # Determine the type of the DoseGridFrameOffsetVector
         # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
 
         if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
 
-            dose_grid_planes_z_position = np.array(computed_dose["DoseGridFrameOffsetVector"]) + computed_dose["DoseGridPositionPatient"][2]
+            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"]) + computed_dose["DoseGridPositionPatient"][2]
 
         elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
 
-            dose_grid_planes_z_position = np.array(computed_dose["DoseGridFrameOffsetVector"])
+            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"])
 
-        for dose_grid_plane_z_position in dose_grid_planes_z_position:
+        # Check if at least one dose grid plane coincides with a slice of the CT series.
 
-            if np.any(np.isclose(dose_grid_plane_z_position, ct_slices_z_position, rtol=0, atol=0.01)):
+        for dose_grid_plane_z_position in dose_grid_planes_z_positions:
 
-                z_axis_alignment["Partial"] = True
+            if np.any(np.isclose(dose_grid_plane_z_position, ct_slices_z_positions, rtol=0, atol=0.01)):
+
+                z_axis_alignment = True
 
                 break
 
-        if not z_axis_alignment["Partial"]:
-
-            return z_axis_alignment
-
-        else:
-
-            # Check for full z axis alignment.
-
-            # Check if the number of the slices of the CT series is equal to the number of the dose grid planes.
-            ct_slices_dose_grid_planes_equality = len(ct_series) == computed_dose["DoseGridFrames"]
-
-            if not ct_slices_dose_grid_planes_equality:
-
-                return z_axis_alignment
-
-            else:
-
-                if (np.allclose(ct_slices_z_position, dose_grid_planes_z_position, rtol=0, atol=0.01) or
-                        np.allclose(ct_slices_z_position, np.flip(dose_grid_planes_z_position), rtol=0, atol=0.01)):
-
-                    z_axis_alignment["Full"] = True
-                    z_axis_alignment["Partial"] = False
-
-                return  z_axis_alignment
+        return z_axis_alignment
 
 
 def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisition_parameters):
