@@ -67,6 +67,11 @@ def load_ct_series(patient_dir_path):
         slice_path = os.path.join(ct_series_dir, filename)
         ct_slice = pydicom.dcmread(slice_path)
         hu_array = np.array((ct_slice.pixel_array * ct_slice.RescaleSlope) + ct_slice.RescaleIntercept, dtype = np.int16)
+
+        # Some CT scanners use a padding technique to mark pixels that don't include valid image data. In such cases,
+        # after the rescaling transformation, these pixels will correspond to extreme HU values. For the proper
+        # visualization of patient's anatomy, clipping of HU values must be performed.
+        hu_array = np.clip(hu_array, a_min = -1024, a_max = None)
         ct_series.append({"HUArray" : hu_array,
                           "ImagePositionPatient" : ct_slice.ImagePositionPatient,
                           "SOPInstanceUID" : ct_slice.SOPInstanceUID})
