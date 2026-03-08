@@ -36,7 +36,7 @@ Access to the complete codebase can be provided upon request.
 
 - While the toolkit supports core DICOM RT objects (CT, RTSTRUCT, RTDOSE, RTPLAN), it does not yet handle all vendor-specific edge cases, private tags, or uncommon acquisition geometries.
 
-- Dose maps computation relies on the assumption of a rectangular dose grid that is spatially aligned with the patient’s coordinate system. In addition, it is assumed that the grid planes are coincident with the CT series, along the z-axis. Non-rectangular grids, rotated grids, or grids that are not z-axis coincident with the CT series are not currently supported.
+- Dose maps computation relies on the assumption of a rectangular dose grid that is spatially aligned with the patient’s coordinate system. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Non-rectangular grids, rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
 
 - 2D Standard visualization mode supports only axial view. Sagittal and coronal views are not currently supported, although 3D volume rendering is available (3D Standard visualization mode).
 
