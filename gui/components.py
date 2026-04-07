@@ -1,39 +1,175 @@
 import napari
-from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QMenu,
-                            QStatusBar,QTableWidget, QTabWidget, QHeaderView, QAbstractItemView)
-from qtpy.QtCore import Qt
+from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QDialog,
+                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget,
+                            QTabWidget, QHeaderView, QAbstractItemView)
+from qtpy.QtCore import Qt, QSize
 
 
 def generate_main_window():
     """
-    This function generates the gui main window. It sets up a QWidget (acting as the main window), and applies
-    custom styling.
+    This function generates the gui main window (custom styling is applied via a qss file).
 
     Returns
     -------
-    window : qtpy.QtWidgets.QWidget
+    main_window : qtpy.QtWidgets.QWidget
         Main gui window.
     """
 
     main_window = QWidget()
+    main_window.setObjectName("main_window")
     main_window.setWindowTitle("PyRTEva, an experimental radiation therapy plan evaluator, based οn Python")
-    main_window.setGeometry(100, 100, 1200, 800)
-    main_window.setStyleSheet("background-color: #1E1E2F; border: 2px solid #6B6F83; border-radius: 6px")
+    make_window_layout = QGridLayout()
+    make_window_layout.setContentsMargins(5, 5, 5, 5)
+    main_window.setLayout(make_window_layout)
 
-    window_layout = QGridLayout()
-    window_layout.setSpacing(5)
-    window_layout.setContentsMargins(5, 5, 5, 5)
-    main_window.setLayout(window_layout)
+    with open("gui/custom_styles/main_window.qss", mode="r") as main_window_qss:
+        main_window.setStyleSheet(main_window_qss.read())
 
     return main_window
+
+
+def generate_user_preferences_window(data_container):
+    """
+    This function generates an auxiliary window that acts as a user interaction panel
+    (custom styling is applied via a qss file).
+
+    Parameters
+    ----------
+    data_container : dict
+    	Shared data container.
+
+    Returns
+    -------
+    window : qtpy.QtWidgets.QDialog
+        Auxiliary window.
+    """
+
+    def change_state_prescribed_dose_widget(signal, widget):
+
+        if signal not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]:
+            widget.setDisabled(True)
+        else:
+            widget.setDisabled(False)
+
+        return None
+
+
+    window = QDialog()
+    window.setObjectName("window")
+    window.setWindowTitle("User Preferences")
+    window.setFixedSize(QSize(915, 600))
+    window_layout = QVBoxLayout()
+    window_layout.setSpacing(10)
+
+    with open("gui/custom_styles/user_preferences_window.qss", mode="r") as user_preferences_window_qss:
+        window.setStyleSheet(user_preferences_window_qss.read())
+
+    alg_settings_outer_container = QGroupBox("Algorithms settings")
+    alg_settings_outer_container.setObjectName("alg_setting_outer_container")
+    alg_settings_outer_container_layout = QVBoxLayout()
+
+    alg_settings_inner_container = QWidget()
+    alg_settings_inner_container.setObjectName("alg_settings_inner_container")
+    alg_settings_inner_container_layout = QGridLayout()
+    alg_settings_inner_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+    interpolation_method = QComboBox()
+    interpolation_method.setObjectName("interpolation_method")
+    interpolation_method.addItems(["linear", "trilinear", "spline"])
+
+    dose_bin_width = QDoubleSpinBox()
+    dose_bin_width.setObjectName("dose_bin_width")
+    dose_bin_width.setRange(0.01, 0.1)
+    dose_bin_width.setSingleStep(0.01)
+
+    alg_settings_inner_container_layout.addWidget(QLabel("Dose grid interpolation method:"), 0 ,0)
+    alg_settings_inner_container_layout.addWidget(interpolation_method, 0, 1)
+    alg_settings_inner_container_layout.addWidget(QLabel("Dose bin width:"), 1, 0)
+    alg_settings_inner_container_layout.addWidget(dose_bin_width, 1, 1)
+    alg_settings_inner_container.setLayout(alg_settings_inner_container_layout)
+
+    alg_settings_info_message = QLabel("Please select the appropriate dose grid interpolation method "
+                                       "as well as the dose bin width that will be used for the DVHs computation.")
+    alg_settings_info_message.setWordWrap(True)
+
+    alg_settings_outer_container_layout.addWidget(alg_settings_info_message)
+    alg_settings_outer_container_layout.addWidget(alg_settings_inner_container)
+    alg_settings_outer_container.setLayout(alg_settings_outer_container_layout)
+
+    structures_info_outer_container = QGroupBox("Structures info")
+    structures_info_outer_container.setObjectName("structures_info_outer_container")
+    structures_info_outer_container_layout = QVBoxLayout()
+
+    structures_info_scrollable_area = QScrollArea()
+    structures_info_scrollable_area.setObjectName("structures_info_scrollable_area")
+    structures_info_scrollable_area.setWidgetResizable(True)
+
+    structures_info_inner_container = QWidget()
+    structures_info_inner_container.setObjectName("structures_info_inner_container")
+    structures_info_inner_container_layout = QVBoxLayout()
+
+    structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk",
+                       "Organ At Risk (Optimization)", "External (Body) Contour"]
+
+    for structure in data_container["Structures"]:
+
+        structure_info = QGroupBox()
+        structure_info.setObjectName(structure["StructureName"] + "structure_info")
+        structure_info_layout = QHBoxLayout()
+        structure_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        structure_name = QLabel(structure["StructureName"])
+        #structure_name.setObjectName(structure["StructureName"] + "structure_label")
+
+        structure_prescribed_dose = QSpinBox()
+        #structure_prescribed_dose.setObjectName(structure["StructureName"] + "prescribed_dose_selection")
+        structure_prescribed_dose.setRange(0,100)
+        structure_prescribed_dose.setSingleStep(1)
+
+        structure_type = QComboBox()
+        #structure_type.setObjectName(structure["StructureName"] + "structure_type_selection")
+        structure_type.addItems(structure_types)
+        structure_type.currentTextChanged.connect(lambda signal, widget = structure_prescribed_dose : change_state_prescribed_dose_widget(signal, widget))
+
+        structure_info_layout.addWidget(structure_name)
+        structure_info_layout.addWidget(QLabel("Structure type:"))
+        structure_info_layout.addWidget(structure_type)
+        structure_info_layout.addWidget(QLabel("Prescribed dose:"))
+        structure_info_layout.addWidget(structure_prescribed_dose)
+        structure_info.setLayout(structure_info_layout)
+
+        structures_info_inner_container_layout.addWidget(structure_info)
+
+    structures_info_inner_container.setLayout(structures_info_inner_container_layout)
+
+    structures_info_scrollable_area.setWidget(structures_info_inner_container)
+
+    structures_info_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures. There are five structure types in total: "
+                                       f"Tumorous Structure, Optimization Tumorous Structure, Organ At Risk, Optimization Organ At Risk and External (Body) Contour. "
+                                       f"Please verify that the pre-assigned structure types, as well as the prescribed doses (to the structures for which are applicable) are correct.")
+    structures_info_message.setWordWrap(True)
+
+    structures_info_outer_container_layout.addWidget(structures_info_message)
+    structures_info_outer_container_layout.addWidget(structures_info_scrollable_area)
+    structures_info_outer_container.setLayout(structures_info_outer_container_layout)
+
+    apply_button = QPushButton("Apply")
+    apply_button.setObjectName("apply_button")
+
+    window_layout.addWidget(apply_button, alignment = Qt.AlignmentFlag.AlignRight)
+    window_layout.addWidget(alg_settings_outer_container)
+    window_layout.addWidget(structures_info_outer_container)
+    window.setLayout(window_layout)
+
+    return window
 
 
 def generate_viewer_panel(panel_name):
     """
     This function generates a panel that acts as a container for a Napari viewer. It sets up a QWidget with a vertical
-    box layout (although the widget container is expected to hold only one element), embeds a blank viewer, and applies
-    custom styling. The viewer is further customized via the "customize_viewer" function. Later on, the blank viewer is
-    replaced by a viewer containing all the relevant image layers.
+    box layout (although the widget container is expected to hold only one element) and embeds a blank viewer.The viewer
+    is further customized via the "customize_viewer" function. Later on, the blank viewer is replaced by a viewer containing
+    all the relevant image layers.
 
     Parameters
     ----------
@@ -48,7 +184,6 @@ def generate_viewer_panel(panel_name):
 
     viewer_panel = QWidget()
     viewer_panel.setObjectName(panel_name)
-    viewer_panel.setStyleSheet("background-color: #23263A; border: 2px solid #6B6F83; border-radius: 6px")
 
     viewer = napari.Viewer(show=False)
     customize_viewer(viewer)
@@ -87,11 +222,9 @@ def generate_composite_panel(panel_name, label):
 
     composite_panel = QWidget()
     composite_panel.setObjectName(panel_name)
-    composite_panel.setStyleSheet("background-color: black; border: 2px solid #6B6F83; border-radius: 6px")
 
     temporary_content = QLabel(label)
     temporary_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    temporary_content.setStyleSheet("font-size: 18px; color: #E8E8F0; background-color:transparent; border: none")
 
     composite_panel_layout = QVBoxLayout()
     composite_panel_layout.setContentsMargins(5, 5, 5, 5)
@@ -120,28 +253,10 @@ def generate_report_tables(report_tables_data):
     """
 
     report_tables = QTabWidget()
-    report_tables.setStyleSheet(""" QTabWidget::pane {border: none; padding-left: 0px; padding-top: 4px; padding-right: 0px; padding-bottom: 0px}
-                                       QTabBar {border: none}
-                                       QTabBar::tab {background-color: #3B3F58; color: #E8E8F0; border: 1px solid #6B6F83; border-radius: 2px;
-                                                     margin-right: 5px; width: 180px; height: 24px; font-size: 13px}
-                                       QTabBar::tab:hover {border-color: #B5B5BA}               
-                                       QTabBar::tab:pressed {border-color: black}
-                                       QTabBar::tab:selected {border-color: #B5B5BA}
-                                       QTableWidget {gridline-color: #6B6F83; background-color: black; color: #E8E8F0} 
-                                       QTabWidget QTableWidget QHeaderView::section:horizontal {background-color: #7D510B;
-                                                                                                color: #E8E8F0;
-                                                                                                border: 1px solid #6B6F83}   
-                                       QTabWidget QTableWidget QHeaderView::section:vertical   {background-color: black;
-                                                                                                color: #E8E8F0;
-                                                                                                border: 1px solid #6B6F83}                                                                      
-                                       QToolTip {background-color: #3B3F58; color: #E8E8F0; border: 1px solid #6B6F83;
-                                                 border-radius: 2px; padding: 2px; font-size: 14px}""")
 
     for table_name, table_data in report_tables_data.items():
 
         tab = QWidget()
-        tab.setStyleSheet("QWidget {border: none; font-size: 15px}")
-
         table = QTableWidget()
         table.setObjectName(table_name)
         table.setRowCount(table_data.shape[0])
@@ -192,7 +307,6 @@ def generate_status_bar_panel(panel_name):
 
     status_bar_panel = QWidget()
     status_bar_panel.setObjectName(panel_name)
-    status_bar_panel.setStyleSheet("background-color: black; border: 2px solid #6B6F83; border-radius: 6px")
 
     status_bar = QStatusBar()
     status_bar.showMessage("Ready")
@@ -225,9 +339,6 @@ def generate_button(label):
     button = QPushButton(label)
     button.setFixedWidth(200)
     button.setFixedHeight(30)
-    button.setStyleSheet(""" QPushButton {font-size: 14px; background-color: #3B3F58; color: #E8E8F0; border: 1px solid #6B6F83; border-radius: 2px}
-                             QPushButton:hover {border-color: #B5B5BA}               
-                             QPushButton:pressed {border-color: #6B6F83}""")
 
     return button
 
@@ -257,22 +368,12 @@ def generate_menu_button(label, menu_item_labels):
     button.setFixedWidth(200)
     button.setFixedHeight(30)
     button.setPopupMode(QToolButton.InstantPopup)
-    button.setStyleSheet(""" QToolButton::menu-indicator {image: none} 
-                             QToolButton {font-size: 14px; background-color: #3B3F58; color: #E8E8F0; border: 1px solid #6B6F83; border-radius: 2px}
-                             QToolButton:hover {border-color: #B5B5BA}
-                             QToolButton:pressed {border-color: #6B6F83}""")
 
     menu = QMenu(button)
     menu.setFixedWidth(200)
 
     for item_label in menu_item_labels:
         menu.addAction(item_label)
-
-    menu.setStyleSheet(""" QMenu {background-color: #3B3F58; border: none}
-                           QMenu::item {font-size: 14px; background-color: #3B3F58; color: #E8E8F0; border: 1px solid #6B6F83; border-radius: 2px; 
-                                        padding-left: 25px; padding-top: 5px; padding-bottom: 5px}
-                           QMenu::item:selected {border-color: #B5B5BA}
-                           QMenu::item:pressed {border-color: #6B6F83}""")
 
     button.setMenu(menu)
 
@@ -301,8 +402,6 @@ def generate_buttonbar(button_bar_name, buttons):
 
     buttonbar = QWidget()
     buttonbar.setObjectName(button_bar_name)
-    buttonbar.setStyleSheet("background-color: #1E1E2F; border: 2px solid #6B6F83; border-radius: 6px")
-
     buttonbar_layout = QHBoxLayout()
     buttonbar_layout.setContentsMargins(5, 5, 5, 5)
     buttonbar_layout.setSpacing(5)

@@ -1,4 +1,5 @@
 from gui.assembler import assemble_gui
+from qtpy.QtWidgets import QApplication
 
 
 def main():
@@ -13,13 +14,12 @@ def main():
 
     function_settings_container = {"InterpolationMethod" : "linear", "DoseBinWidth" : 0.05, "ReferenceIsodose" : 0.95}
 
-    app, main_window = assemble_gui(data_container, function_settings_container)
-    main_window.showMaximized()
+    app = QApplication()
+    app_window = assemble_gui(data_container, function_settings_container)
+    app_window.showMaximized()
     app.exec()
 
     return None
 
 
-if __name__ == "__main__":
-
-    main()
+main()

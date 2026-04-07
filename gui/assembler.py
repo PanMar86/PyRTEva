@@ -1,4 +1,3 @@
-from qtpy.QtWidgets import QApplication
 from gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel, generate_status_bar_panel,
                             generate_button, generate_menu_button, generate_buttonbar)
 from gui.callbacks import (load_patient_data, generate_intermediate_data, display_visualisation,
@@ -20,14 +19,9 @@ def assemble_gui(data_container, function_settings_container):
 
     Returns
     -------
-    app : qtpy.QtWidgets.QApplication
-        The assembled gui.
-
     main_window : qtpy.QtWidgets.QWidget
         The assembled gui main window.
     """
-
-    app = QApplication([])
 
     # Create the main window.
     main_window = generate_main_window()
@@ -93,4 +87,4 @@ def assemble_gui(data_container, function_settings_container):
     main_window.layout().setColumnStretch(0, 1)
     main_window.layout().setColumnStretch(1, 1)
 
-    return app, main_window
+    return main_window

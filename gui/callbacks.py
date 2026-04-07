@@ -1,6 +1,6 @@
 import napari
 import pickle
-from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem
+from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QGroupBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
 from gui.components import generate_report_tables
