@@ -6,9 +6,8 @@ import re
 
 def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
     """
-    This function loads the DICOM RTSTRUCT file located in the "RTSTRUCT" subdirectory of patient's directory, filters out
-    pseudo-structures commonly used for optimization purposes and returns the remaining structures along with their
-    contour points referenced to the corresponding slices.
+    This function loads the DICOM RTSTRUCT file located in the "RTSTRUCT" subdirectory of patient's directory, and returns
+    the structures along with their contour points referenced to the corresponding slices.
 
     Parameters
     ----------
@@ -60,11 +59,14 @@ def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
     for structure_index in range(len(structures_data.ROIContourSequence)):
 
         structure_name = structures_data.StructureSetROISequence[structure_index].ROIName
-        structure_type = structures_data.RTROIObservationsSequence[structure_index].RTROIInterpretedType
+
+        # First-line structure identification.
+        structure_interpreted_type = structures_data.RTROIObservationsSequence[structure_index].RTROIInterpretedType
+        structure_type = identify_rt_structures(structure_name, structure_interpreted_type)
 
         # Omit all pseudo-structures commonly used during plan optimization.
         if ((re.search("ring", structure_name.lower()) is None) and not
-           ((structure_type.lower() == "organ" or structure_type.lower() == "control") and
+           ((structure_interpreted_type.lower() == "organ" or structure_interpreted_type.lower() == "control") and
             (re.search(r"\d", structure_name.lower()) is not None))):
 
             contours = []
@@ -77,8 +79,58 @@ def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
                                                               ContourSequence[contour].ContourImageSequence[0].ReferencedSOPInstanceUID})
 
             structure = {"StructureName" : structure_name,
-                         "StructureInterpretedType" : structure_type,
-                         "ContoursOnReferencedImages" : contours}
+                         "StructureInterpretedType" : structure_interpreted_type,
+                         "ContoursOnReferencedImages" : contours,
+                         "StructureType" : structure_type}
             structures.append(structure)
 
     return structures
+
+
+def identify_rt_structures(structure_name, structure_interpreted_type):
+    """
+    This function uses regular expressions in order to classify the structure into five custom types: "Tumorous Structure",
+    "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)", "Other".
+
+    Parameters
+    ----------
+    structure_name : str
+        Name of the structure.
+
+    structure_interpreted_type : str
+        Interpreted type of the structure (e.g., ORGAN, CONTROL).
+
+    Returns
+    -------
+    structure_type : str
+        Type of the structure.
+    """
+
+    # Detect the external body contour.
+    if re.search(r"external|body|contour|patient", structure_name.lower()):
+        if structure_interpreted_type.lower() == "external":
+            structure_type = "External Body Contour"
+        elif structure_interpreted_type.lower() == "control":
+            structure_type = "Other"
+
+    # Detect the tumorous structures.
+    elif (re.search(r"^(gtv|ctv|itv|ptv|boost)", structure_name.lower()) or
+          re.search(r"((ring[0-9a-z_ -]*(gtv|ctv|itv|ptv|boost))|((gtv|ctv|itv|ptv|boost)[0-9a-z_ -]*ring))", structure_name.lower())):
+
+        if structure_interpreted_type.lower() == "control":
+            structure_type = "Tumorous Structure (Optimization)"
+        elif structure_interpreted_type.lower() in ["gtv", "ctv", "itv", "ptv"]:
+            structure_type = "Tumorous Structure"
+
+    # Detect the organs at risk (OARs).
+    elif re.search(r"^[a-z_ -]+(minus|-|exclude|excluding)?[a-z_ -]*(gtv|ctv|itv|ptv)?", structure_name.lower()):
+        if structure_interpreted_type.lower() == "control":
+            structure_type = "Organ At Risk (Optimization)"
+        elif structure_interpreted_type.lower() == "organ":
+            structure_type = "Organ At Risk"
+
+    # Unknown structure type.
+    else:
+        structure_type = "Other"
+
+    return structure_type
