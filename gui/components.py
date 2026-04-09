@@ -1,6 +1,6 @@
 import napari
 from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QDialog,
-                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget,
+                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget, QMessageBox,
                             QTabWidget, QHeaderView, QAbstractItemView)
 from qtpy.QtCore import Qt, QSize
 
@@ -30,8 +30,7 @@ def generate_main_window():
 
 def generate_user_preferences_window(data_container):
     """
-    This function generates an auxiliary window that acts as a user interaction panel
-    (custom styling is applied via a qss file).
+    This function generates an auxiliary window that acts as a user interaction panel (custom styling is applied via a qss file).
 
     Parameters
     ----------
@@ -44,11 +43,64 @@ def generate_user_preferences_window(data_container):
         Auxiliary window.
     """
 
-    def change_state_prescribed_dose_widget(signal, widget):
+    def verify_user_preferences(container_widget, parent_widget):
+        """
+        This function verifies that there is a unique structure, whose type has been assigned to "External Body Contour".
 
-        if signal not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]:
-            widget.setDisabled(True)
+        Parameters
+        ----------
+        container_widget : qtpy.QtWidgets.QWidget
+        	Container of the combo-boxes corresponding to the type of the structures.
+
+        parent_widget : qtpy.QtWidgets.QDialog
+            Parent widget of the pop-up message-boxes.
+        """
+
+        num_body_contours = 0
+
+        for structure_type_widget in container_widget.findChildren(QComboBox):
+
+            if structure_type_widget.currentText() == "External Body Contour":
+
+                num_body_contours += 1
+
+        if num_body_contours == 0:
+
+            QMessageBox.warning(parent_widget, "Non-valid structure types","A structure corresponding to external body contour has not been found.")
+
+        elif num_body_contours > 1:
+
+            QMessageBox.warning(parent_widget,"Non-valid structure types", "Only a single structure's type can be assigned to 'External Body Contour'.")
+
         else:
+
+            QMessageBox.information(parent_widget, "Success","User preferences have been accepted.")
+            parent_widget.close()
+
+        return None
+
+
+    def change_state_prescribed_dose_widget(signal_text, widget):
+        """
+        This function activates / deactivates (if necessary) the widget associated with the prescribed dose, each time the user
+        assigns a different structure type than the one having already been assigned.
+
+        Parameters
+        ----------
+        signal_text : str
+            User-assigned structure type.
+
+        widget : qtpy.QtWidgets.QSpinBox
+            Prescribed dose widget.
+        """
+
+        if (signal_text not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]) and widget.isEnabled():
+
+            widget.setValue(0)
+            widget.setDisabled(True)
+
+        elif (signal_text in ["Tumorous Structure", "Tumorous Structure (Optimization)"]) and (not widget.isEnabled()):
+
             widget.setDisabled(False)
 
         return None
@@ -57,6 +109,7 @@ def generate_user_preferences_window(data_container):
     window = QDialog()
     window.setObjectName("window")
     window.setWindowTitle("User Preferences")
+    window.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
     window.setFixedSize(QSize(915, 600))
     window_layout = QVBoxLayout()
     window_layout.setSpacing(10)
@@ -73,23 +126,34 @@ def generate_user_preferences_window(data_container):
     alg_settings_inner_container_layout = QGridLayout()
     alg_settings_inner_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-    interpolation_method = QComboBox()
-    interpolation_method.setObjectName("interpolation_method")
-    interpolation_method.addItems(["linear", "trilinear", "spline"])
+    dose_grid_interpolation_method = QComboBox()
+    dose_grid_interpolation_method.setObjectName("dose_grid_interpolation_method")
+    dose_grid_interpolation_method.addItems(["linear", "nearest", "slinear", "cubic", "quintic", "pchip"])
+    dose_grid_interpolation_method.setCurrentText("cubic")
 
     dose_bin_width = QDoubleSpinBox()
     dose_bin_width.setObjectName("dose_bin_width")
     dose_bin_width.setRange(0.01, 0.1)
     dose_bin_width.setSingleStep(0.01)
+    dose_bin_width.setValue(0.05)
+
+    reference_isodose = QDoubleSpinBox()
+    reference_isodose.setObjectName("reference_isodose")
+    reference_isodose.setRange(0.85, 1.10)
+    reference_isodose.setSingleStep(0.01)
+    reference_isodose.setValue(0.95)
 
     alg_settings_inner_container_layout.addWidget(QLabel("Dose grid interpolation method:"), 0 ,0)
-    alg_settings_inner_container_layout.addWidget(interpolation_method, 0, 1)
+    alg_settings_inner_container_layout.addWidget(dose_grid_interpolation_method, 0, 1)
     alg_settings_inner_container_layout.addWidget(QLabel("Dose bin width:"), 1, 0)
     alg_settings_inner_container_layout.addWidget(dose_bin_width, 1, 1)
+    alg_settings_inner_container_layout.addWidget(QLabel("Reference isodose:"), 2, 0)
+    alg_settings_inner_container_layout.addWidget(reference_isodose, 2, 1)
     alg_settings_inner_container.setLayout(alg_settings_inner_container_layout)
 
-    alg_settings_info_message = QLabel("Please select the appropriate dose grid interpolation method "
-                                       "as well as the dose bin width that will be used for the DVHs computation.")
+    alg_settings_info_message = QLabel("Please select the dose grid interpolation method, "
+                                       "the dose bin width of the DVHs and the reference isodose "
+                                       "(for which the conformance indices will be computed).")
     alg_settings_info_message.setWordWrap(True)
 
     alg_settings_outer_container_layout.addWidget(alg_settings_info_message)
@@ -109,29 +173,37 @@ def generate_user_preferences_window(data_container):
     structures_info_inner_container_layout = QVBoxLayout()
 
     structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk",
-                       "Organ At Risk (Optimization)", "External (Body) Contour"]
+                       "Organ At Risk (Optimization)", "External Body Contour", "Other"]
 
     for structure in data_container["Structures"]:
 
         structure_info = QGroupBox()
-        structure_info.setObjectName(structure["StructureName"] + "structure_info")
         structure_info_layout = QHBoxLayout()
         structure_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        structure_name = QLabel(structure["StructureName"])
-        #structure_name.setObjectName(structure["StructureName"] + "structure_label")
+        structure_type = QComboBox()
+        structure_type.setObjectName(structure["StructureName"].lower() + "_type")
+        structure_type.addItems(structure_types)
+        structure_type.setCurrentText(structure["StructureType"])
 
         structure_prescribed_dose = QSpinBox()
-        #structure_prescribed_dose.setObjectName(structure["StructureName"] + "prescribed_dose_selection")
+        structure_prescribed_dose.setObjectName(structure["StructureName"].lower() + "_prescribed_dose")
         structure_prescribed_dose.setRange(0,100)
         structure_prescribed_dose.setSingleStep(1)
 
-        structure_type = QComboBox()
-        #structure_type.setObjectName(structure["StructureName"] + "structure_type_selection")
-        structure_type.addItems(structure_types)
-        structure_type.currentTextChanged.connect(lambda signal, widget = structure_prescribed_dose : change_state_prescribed_dose_widget(signal, widget))
+        if structure_type.currentText() not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]:
 
-        structure_info_layout.addWidget(structure_name)
+            structure_prescribed_dose.setValue(0)
+            structure_prescribed_dose.setDisabled(True)
+
+        else:
+
+            structure_prescribed_dose.setValue(data_container["TreatmentPlan"]["PrescribedDose"])
+
+        # Change the state (if necessary) of the prescribed dose widget according to the user-selected structure type.
+        structure_type.currentTextChanged.connect(lambda signal_text, widget = structure_prescribed_dose : change_state_prescribed_dose_widget(signal_text, widget))
+
+        structure_info_layout.addWidget(QLabel(structure["StructureName"]))
         structure_info_layout.addWidget(QLabel("Structure type:"))
         structure_info_layout.addWidget(structure_type)
         structure_info_layout.addWidget(QLabel("Prescribed dose:"))
@@ -155,6 +227,7 @@ def generate_user_preferences_window(data_container):
 
     apply_button = QPushButton("Apply")
     apply_button.setObjectName("apply_button")
+    apply_button.clicked.connect(lambda : verify_user_preferences(structures_info_inner_container, window))
 
     window_layout.addWidget(apply_button, alignment = Qt.AlignmentFlag.AlignRight)
     window_layout.addWidget(alg_settings_outer_container)
