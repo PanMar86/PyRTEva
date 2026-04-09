@@ -1,9 +1,9 @@
 import napari
 import pickle
-from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QGroupBox
+from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
-from gui.components import generate_report_tables
+from gui.components import generate_report_tables, generate_user_preferences_window
 from dicom_io.ct_series import load_ct_series
 from dicom_io.rt_struct import load_rt_structures
 from dicom_io.rt_dose import load_computed_dose
@@ -61,6 +61,60 @@ def load_patient_data(data_container, status_bar):
     update_status_bar(status_bar, "Computed dose has been successfully imported.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
+
+    return None
+
+
+def apply_user_preferences(data_container, status_bar):
+    """
+    This function triggers an auxiliary window that acts as a user interaction panel. It uses a dictionary, acting as
+    a (shared) data container, to store the corresponding, user preferences data. Finally, the gui status bar is updated
+    to reflect the current, user preferences application stage.
+
+    Parameters
+    ----------
+    data_container : dict
+        Shared data container.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+    """
+
+    update_status_bar(status_bar, "User preferences are being applied...")
+    user_preferences_window = generate_user_preferences_window(data_container)
+    user_preferences_window.exec()
+
+    # Apply algorithms settings.
+    dose_grid_interpolation_method =  user_preferences_window.findChild(QComboBox,"dose_grid_interpolation_method").currentText()
+    data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"] = dose_grid_interpolation_method
+    dose_bin_width = user_preferences_window.findChild(QDoubleSpinBox,"dose_bin_width").value()
+    data_container["AlgorithmsSettings"]["DoseBinWidth"] = dose_bin_width
+    reference_isodose = user_preferences_window.findChild(QDoubleSpinBox,"reference_isodose").value()
+    data_container["AlgorithmsSettings"]["ReferenceIsodose"] = reference_isodose
+
+    for structure in data_container["Structures"]:
+
+        # Apply structures' types.
+        structure_type = user_preferences_window.findChild(QComboBox, structure["StructureName"].lower() + "_type").currentText()
+
+        if structure["StructureType"] != structure_type:
+
+            structure["StructureType"] = structure_type
+
+        # Apply structures' prescribed doses.
+        structure_prescribed_dose_widget = user_preferences_window.findChild(QSpinBox, structure["StructureName"].lower() + "_prescribed_dose")
+
+        if structure_prescribed_dose_widget.isEnabled():
+
+            structure_prescribed_dose = structure_prescribed_dose_widget.value()
+
+        else:
+
+            structure_prescribed_dose = None
+
+        structure["PrescribedDose"] = structure_prescribed_dose
+
+    update_status_bar(status_bar, "User preferences have been successfully applied.")
 
     return None
 

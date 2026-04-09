@@ -1,6 +1,6 @@
 from gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel, generate_status_bar_panel,
                             generate_button, generate_menu_button, generate_buttonbar)
-from gui.callbacks import (load_patient_data, generate_intermediate_data, display_visualisation,
+from gui.callbacks import (load_patient_data, apply_user_preferences, generate_intermediate_data, display_visualisation,
                            display_dose_volume_histograms, display_evaluation_report)
 
 
@@ -38,6 +38,7 @@ def assemble_gui(data_container, function_settings_container):
 
     load_data_button = generate_button("Load patient data")
     load_data_button.clicked.connect(lambda: load_patient_data(data_container, status_bar))
+    load_data_button.clicked.connect(lambda: apply_user_preferences(data_container, status_bar))
     buttons.append(load_data_button)
 
     process_data_button = generate_button("Process patient data")
