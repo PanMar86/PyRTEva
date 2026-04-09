@@ -10,7 +10,9 @@ def main():
 
     data_container = {"PatientsDirectory": "sample_data/dicom_data", "CTSeries": None, "SeriesAcquisitionParameters": None,
                       "Structures": None, "TreatmentPlan": None, "ComputedDose" : None, "StructuresMasks": None,
-                      "DoseMaps": None, "DoseVolumeHistograms": None}
+                      "DoseMaps": None, "DoseVolumeHistograms": None,"AlgorithmsSettings": {"DoseGridInterpolationMethod": None,
+                                                                                            "DoseBinWidth": None,
+                                                                                            "ReferenceIsodose" : None}}
 
     function_settings_container = {"InterpolationMethod" : "linear", "DoseBinWidth" : 0.05, "ReferenceIsodose" : 0.95}
 

@@ -15,7 +15,7 @@ def generate_dose_volume_histograms(ct_series_acquisition_parameters, structures
         Dictionary containing acquisition parameters.
 
     structures_masks : list of dict
-    List of generated structures masks.
+        List of generated structures masks.
 
     dose_maps : dict
         Dictionary containing the generated dose maps.
