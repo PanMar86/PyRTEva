@@ -4,7 +4,7 @@ import os
 import re
 
 
-def load_rt_structures(patient_dir_path, ct_series_frame_of_reference_uid):
+def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
     """
     This function loads the DICOM RTSTRUCT file located in the "RTSTRUCT" subdirectory of patient's directory, and returns
     the structures along with their contour points referenced to the corresponding slices.

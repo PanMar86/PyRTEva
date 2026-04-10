@@ -10,7 +10,7 @@ def main():
 
     data_container = {"PatientsDirectory": "sample_data/dicom_data", "SeriesAcquisitionParameters": None,
                       "AlgorithmsSettings": {"DoseGridInterpolationMethod": None, "DoseBinWidth": None, "ReferenceIsodose": None},
-                      "CTSeries": None, "Structures": None, "ComputedDose" : None, "TreatmentPlan": None,
+                      "CTSeries": None, "Structures": None, "ComputedDose" : None, "StructuresPrescribedDoses": None,
                       "StructuresMasks": None, "DoseMaps": None, "DoseVolumeHistograms": None}
 
     app = QApplication()

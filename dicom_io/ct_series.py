@@ -64,36 +64,36 @@ def load_ct_series(patient_dir_path):
 
             continue
 
-        slice_path = os.path.join(ct_series_dir, filename)
-        ct_slice = pydicom.dcmread(slice_path)
-        hu_array = np.array((ct_slice.pixel_array * ct_slice.RescaleSlope) + ct_slice.RescaleIntercept, dtype = np.int16)
+        ct_slice_path = os.path.join(ct_series_dir, filename)
+        ct_slice_data = pydicom.dcmread(ct_slice_path)
+        hu_array = np.array((ct_slice_data.pixel_array * ct_slice_data.RescaleSlope) + ct_slice_data.RescaleIntercept, dtype = np.int16)
 
         # Some CT scanners use a padding technique to mark pixels that don't include valid image data. In such cases,
         # after the rescaling transformation, these pixels will correspond to extreme HU values. For the proper
         # visualization of patient's anatomy, clipping of HU values must be performed.
         hu_array = np.clip(hu_array, a_min = -1024, a_max = None)
         ct_series.append({"HUArray" : hu_array,
-                          "ImagePositionPatient" : ct_slice.ImagePositionPatient,
-                          "SOPInstanceUID" : ct_slice.SOPInstanceUID})
+                          "ImagePositionPatient" : ct_slice_data.ImagePositionPatient,
+                          "SOPInstanceUID" : ct_slice_data.SOPInstanceUID})
 
     # Sort the slices superior to inferior.
     ct_series = sorted(ct_series, key=lambda x: x["ImagePositionPatient"][2], reverse=True)
 
     # Extract the acquisition parameters from the last slice of the series (since all slices belong to the series,
     # they share the same parameters).
-    ct_series_acquisition_parameters = {"ImageDimensions" : [ct_slice.Rows, ct_slice.Columns],
-                                        "ImagePlanarPositionPatient": ct_slice.ImagePositionPatient[:2],
-                                        "PixelSpacing" : ct_slice.PixelSpacing,
-                                        "SliceThickness" : ct_slice.SliceThickness,
-                                        "ImageOrientationPatient" : ct_slice.ImageOrientationPatient,
-                                        "PatientPosition" : ct_slice.PatientPosition,
-                                        "FrameOfReferenceUID" : ct_slice.FrameOfReferenceUID}
+    ct_series_acquisition_parameters = {"ImageDimensions" : [ct_slice_data.Rows, ct_slice_data.Columns],
+                                        "ImagePlanarPositionPatient": ct_slice_data.ImagePositionPatient[:2],
+                                        "PixelSpacing" : ct_slice_data.PixelSpacing,
+                                        "SliceThickness" : ct_slice_data.SliceThickness,
+                                        "ImageOrientationPatient" : ct_slice_data.ImageOrientationPatient,
+                                        "PatientPosition" : ct_slice_data.PatientPosition,
+                                        "FrameOfReferenceUID" : ct_slice_data.FrameOfReferenceUID}
 
     # Check if SpacingBetweenSlices attribute is present.
 
-    if "SpacingBetweenSlices" in ct_slice.dir():
+    if "SpacingBetweenSlices" in ct_slice_data.dir():
 
-        ct_series_acquisition_parameters["SpacingBetweenSlices"] = ct_slice.SpacingBetweenSlices
+        ct_series_acquisition_parameters["SpacingBetweenSlices"] = ct_slice_data.SpacingBetweenSlices
 
     else:
 

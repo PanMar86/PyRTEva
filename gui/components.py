@@ -110,7 +110,7 @@ def generate_user_preferences_window(data_container):
     window.setObjectName("window")
     window.setWindowTitle("User Preferences")
     window.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
-    window.setFixedSize(QSize(915, 600))
+    window.setFixedSize(QSize(915, 700))
     window_layout = QVBoxLayout()
     window_layout.setSpacing(10)
 
@@ -198,7 +198,8 @@ def generate_user_preferences_window(data_container):
 
         else:
 
-            structure_prescribed_dose.setValue(data_container["TreatmentPlan"]["PrescribedDose"])
+            # Set the first occurring prescribed dose value.
+            structure_prescribed_dose.setValue(data_container["StructuresPrescribedDoses"][0]["PrescribedDose"])
 
         # Change the state (if necessary) of the prescribed dose widget according to the user-selected structure type.
         structure_type.currentTextChanged.connect(lambda signal_text, widget = structure_prescribed_dose : change_state_prescribed_dose_widget(signal_text, widget))
@@ -216,9 +217,13 @@ def generate_user_preferences_window(data_container):
 
     structures_info_scrollable_area.setWidget(structures_info_inner_container)
 
-    structures_info_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures. There are five structure types in total: "
-                                       f"Tumorous Structure, Optimization Tumorous Structure, Organ At Risk, Optimization Organ At Risk and External (Body) Contour. "
-                                       f"Please verify that the pre-assigned structure types, as well as the prescribed doses (to the structures for which are applicable) are correct.")
+    if len(data_container["StructuresPrescribedDoses"]) == 1:
+        additional_message = f"They have also been detected {len(data_container["StructuresPrescribedDoses"])} structures with different prescribed doses associated with them. "
+    else:
+        additional_message = ""
+
+    structures_info_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
+                                     f"Please verify that the pre-assigned structure types, as well as the prescribed doses (to the structures for which prescribed doses are applicable) are correct.")
     structures_info_message.setWordWrap(True)
 
     structures_info_outer_container_layout.addWidget(structures_info_message)

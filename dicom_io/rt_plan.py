@@ -2,10 +2,11 @@ import pydicom
 import os
 
 
-def load_treatment_plan(patient_dir_path, ct_series_frame_of_reference_uid):
+def load_structures_prescribed_doses(patient_dir_path, ct_series_frame_of_reference_uid):
     """
     This function loads the DICOM RTPLAN file located in the "RTPLAN" subdirectory of patient's directory and extracts
-    dose prescription-related parameters, such as the prescribed target dose and the planned number of fractions.
+    dose prescription-related parameters, such as the prescribed dose and the dose reference type for each provided
+    structure.
 
     Parameters
     ----------
@@ -18,12 +19,14 @@ def load_treatment_plan(patient_dir_path, ct_series_frame_of_reference_uid):
 
     Returns
     -------
-    treatment_plan_parameters : dict
-        Dictionary containing dose prescription parameters. The dictionary contains:
+    prescribed_doses : list of dict
+        List of dose prescription parameters for the provided structures. Each dictionary contains:
+        - "DoseReferenceType" : str
+            Dose reference type (e.g., TARGET, ORGAN_AT_RISK).
+        - "DoseReferenceDescription" : str
+            User-defined description.
         - "PrescribedDose" : float
             Prescribed dose, expressed in Gy.
-        - "NumberOfFractions" : int
-            Planned number of treatment fractions.
     """
 
     treatment_plan_dir = os.path.join(patient_dir_path, "RTPLAN")
@@ -41,13 +44,20 @@ def load_treatment_plan(patient_dir_path, ct_series_frame_of_reference_uid):
             treatment_plan_filename = filename
 
     treatment_plan_path = os.path.join(treatment_plan_dir, treatment_plan_filename)
-    treatment_plan = pydicom.dcmread(treatment_plan_path)
+    treatment_plan_data = pydicom.dcmread(treatment_plan_path)
 
-    if treatment_plan.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
+    if treatment_plan_data.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
 
         raise ValueError("There was a frame of reference mismatch. Different frames of reference are not supported.")
 
-    treatment_plan_parameters = {"PrescribedDose" : treatment_plan.DoseReferenceSequence[0].TargetPrescriptionDose,
-                                 "NumberOfFractions" : treatment_plan.FractionGroupSequence[0].NumberOfFractionsPlanned}
+    structures_prescribed_doses = []
 
-    return treatment_plan_parameters
+    for prescribed_dose_index in range(len(treatment_plan_data.DoseReferenceSequence)):
+
+        structure_prescribe_dose = {"DoseReferenceType" : treatment_plan_data.DoseReferenceSequence[prescribed_dose_index].DoseReferenceType,
+                                    "DoseReferenceDescription" : treatment_plan_data.DoseReferenceSequence[prescribed_dose_index].DoseReferenceDescription,
+                                    "PrescribedDose" : treatment_plan_data.DoseReferenceSequence[prescribed_dose_index].TargetPrescriptionDose}
+
+        structures_prescribed_doses.append(structure_prescribe_dose)
+
+    return structures_prescribed_doses

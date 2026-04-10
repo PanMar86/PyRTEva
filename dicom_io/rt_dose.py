@@ -75,28 +75,28 @@ def load_computed_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_se
             compute_dose_filename = filename
 
     computed_dose_path = os.path.join(computed_dose_dir, compute_dose_filename)
-    computed_dose = pydicom.dcmread(computed_dose_path)
+    computed_dose_data = pydicom.dcmread(computed_dose_path)
 
-    if computed_dose.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
+    if computed_dose_data.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
 
         raise ValueError("There was a frame of reference mismatch. Different frames of reference are not supported.")
 
-    if not np.allclose(computed_dose.ImageOrientationPatient, ct_series_orientation, rtol = 0, atol = 0.01):
+    if not np.allclose(computed_dose_data.ImageOrientationPatient, ct_series_orientation, rtol = 0, atol = 0.01):
 
         raise ValueError("There was an orientation mismatch. Dose grids that have different spatial orientation than\n"
                          "the CT series are not supported.")
 
-    computed_dose_distribution = np.array(computed_dose.pixel_array * computed_dose.DoseGridScaling, dtype = np.float64)
+    computed_dose_distribution = np.array(computed_dose_data.pixel_array * computed_dose_data.DoseGridScaling, dtype = np.float64)
 
     computed_dose = {"ScaledDoseArray" : computed_dose_distribution,
                      "MaximumDose" : np.max(computed_dose_distribution),
-                     "DoseType" : computed_dose.DoseType,
-                     "DoseUnits" : computed_dose.DoseUnits,
-                     "DoseGridPlanarDimensions" : [computed_dose.Rows, computed_dose.Columns],
-                     "DoseGridFrames" : computed_dose.NumberOfFrames,
-                     "DoseGridPlanarSpacing" : computed_dose.PixelSpacing,
-                     "DoseGridFrameOffsetVector" : computed_dose.GridFrameOffsetVector,
-                     "DoseGridOrientationPatient" : computed_dose.ImageOrientationPatient,
-                     "DoseGridPositionPatient" : computed_dose.ImagePositionPatient}
+                     "DoseType" : computed_dose_data.DoseType,
+                     "DoseUnits" : computed_dose_data.DoseUnits,
+                     "DoseGridPlanarDimensions" : [computed_dose_data.Rows, computed_dose_data.Columns],
+                     "DoseGridFrames" : computed_dose_data.NumberOfFrames,
+                     "DoseGridPlanarSpacing" : computed_dose_data.PixelSpacing,
+                     "DoseGridFrameOffsetVector" : computed_dose_data.GridFrameOffsetVector,
+                     "DoseGridOrientationPatient" : computed_dose_data.ImageOrientationPatient,
+                     "DoseGridPositionPatient" : computed_dose_data.ImagePositionPatient}
 
     return computed_dose
