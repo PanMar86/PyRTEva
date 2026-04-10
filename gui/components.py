@@ -129,7 +129,7 @@ def generate_user_preferences_window(data_container):
     dose_grid_interpolation_method = QComboBox()
     dose_grid_interpolation_method.setObjectName("dose_grid_interpolation_method")
     dose_grid_interpolation_method.addItems(["linear", "nearest", "slinear", "cubic", "quintic", "pchip"])
-    dose_grid_interpolation_method.setCurrentText("cubic")
+    dose_grid_interpolation_method.setCurrentText("linear")
 
     dose_bin_width = QDoubleSpinBox()
     dose_bin_width.setObjectName("dose_bin_width")

@@ -4,7 +4,7 @@ from gui.callbacks import (load_patient_data, apply_user_preferences, generate_i
                            display_dose_volume_histograms, display_evaluation_report)
 
 
-def assemble_gui(data_container, function_settings_container):
+def assemble_gui(data_container):
     """
     This function assembles the graphical user interface (gui), initializes all gui panels, and connects the user
     interactions (clicked buttons) to their corresponding callback functions.
@@ -13,9 +13,6 @@ def assemble_gui(data_container, function_settings_container):
     ----------
     data_container : dict
         Dictionary acting as a data container used by the callback functions.
-
-    function_settings_container : dict
-        Dictionary acting as a function settings container used by the callback functions.
 
     Returns
     -------
@@ -42,7 +39,7 @@ def assemble_gui(data_container, function_settings_container):
     buttons.append(load_data_button)
 
     process_data_button = generate_button("Process patient data")
-    process_data_button.clicked.connect(lambda: generate_intermediate_data(data_container, function_settings_container, status_bar))
+    process_data_button.clicked.connect(lambda: generate_intermediate_data(data_container, status_bar))
     buttons.append(process_data_button)
 
     std_visualisations_button = generate_menu_button("Standard visualisations", ["Generate 2D visualisation", "Generate 3D visualisation"])
@@ -66,8 +63,7 @@ def assemble_gui(data_container, function_settings_container):
     buttons.append(dvh_button)
 
     plan_evaluation_button = generate_button("Evaluate plan")
-    plan_evaluation_button.clicked.connect(lambda: display_evaluation_report(data_container, function_settings_container,
-                                                                             status_bar, plan_evaluation_panel))
+    plan_evaluation_button.clicked.connect(lambda: display_evaluation_report(data_container, status_bar, plan_evaluation_panel))
     buttons.append(plan_evaluation_button)
 
     buttonbar = generate_buttonbar("ButtonBar", buttons)

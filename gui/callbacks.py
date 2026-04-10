@@ -49,16 +49,16 @@ def load_patient_data(data_container, status_bar):
     data_container["Structures"] = structures
     update_status_bar(status_bar, "RT structures have been imported successfully.")
 
-    update_status_bar(status_bar, "Treatment plan is being imported. Please wait...")
-    treatment_plan = load_treatment_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
-    data_container["TreatmentPlan"] = treatment_plan
-    update_status_bar(status_bar, "Treatment plan has been imported successfully.")
-
     update_status_bar(status_bar, "Computed dose is being imported...")
     computed_dose = load_computed_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
                                        data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
     data_container["ComputedDose"] = computed_dose
     update_status_bar(status_bar, "Computed dose has been successfully imported.")
+
+    update_status_bar(status_bar, "Treatment plan is being imported. Please wait...")
+    treatment_plan = load_treatment_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
+    data_container["TreatmentPlan"] = treatment_plan
+    update_status_bar(status_bar, "Treatment plan has been imported successfully.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
 
@@ -119,7 +119,7 @@ def apply_user_preferences(data_container, status_bar):
     return None
 
 
-def generate_intermediate_data(data_container, function_settings_container, status_bar):
+def generate_intermediate_data(data_container, status_bar):
     """
     This function triggers the execution of the functions that generate all the necessary (intermediate) data required
     both for visualization and plan assessment. They use the loaded, patient-related DICOM data to generate structure
@@ -131,9 +131,6 @@ def generate_intermediate_data(data_container, function_settings_container, stat
     data_container : dict
         Shared data container.
 
-    function_settings_container : dict
-        Shared function settings container.
-
     status_bar :qtpy.QtWidgets.QStatusBar
         Status bar.
     """
@@ -141,20 +138,18 @@ def generate_intermediate_data(data_container, function_settings_container, stat
     update_status_bar(status_bar, "Patient data processing has been initiated. Please wait...")
 
     update_status_bar(status_bar, "Structures masks are being generated. Please wait...")
-    structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
-                                                 data_container["Structures"])
+    structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"], data_container["Structures"])
     data_container["StructuresMasks"] = structures_masks
     update_status_bar(status_bar, "Structures masks have been generated successfully.")
 
     update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
     dose_maps = generate_dose_maps(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
-                                   data_container["ComputedDose"], function_settings_container["InterpolationMethod"])
+                                   data_container["ComputedDose"], data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"])
     data_container["DoseMaps"] = dose_maps
     update_status_bar(status_bar, "Dose maps have been generated successfully.")
 
-    update_status_bar(status_bar, "Dose volume histograms are being generated. Please wait...")
     dose_volume_histograms = generate_dose_volume_histograms(data_container["SeriesAcquisitionParameters"], structures_masks,
-                                                             dose_maps, function_settings_container["DoseBinWidth"])
+                                                             dose_maps, data_container["AlgorithmsSettings"]["DoseBinWidth"])
     data_container["DoseVolumeHistograms"] = dose_volume_histograms
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
@@ -246,7 +241,7 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     return None
 
 
-def display_evaluation_report(data_container, function_settings_container, status_bar, evaluation_panel):
+def display_evaluation_report(data_container, status_bar, evaluation_panel):
     """
     This function triggers the execution of the functions that split the generated dose volume histograms (DVHs) into
     three groups (corresponding to tumorous structures, OARs and OARs with at least one corresponding dose constraint
@@ -259,9 +254,6 @@ def display_evaluation_report(data_container, function_settings_container, statu
     ----------
     data_container : dict
         Shared data container.
-
-    function_settings_container : dict
-        Shared function settings container.
 
     status_bar : qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -289,7 +281,7 @@ def display_evaluation_report(data_container, function_settings_container, statu
     dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
     dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
                                                             data_container["TreatmentPlan"]["PrescribedDose"],
-                                                            function_settings_container["ReferenceIsodose"],
+                                                            data_container["AlgorithmsSettings"]["ReferenceIsodose"],
                                                             tumorous_structures_dvhs, oars_dvhs)
 
     report_tables_data = {"Dosimetric Indices" : dosimetric_indices_evaluation, "Dose Conformance" : dose_conformance_evaluation,

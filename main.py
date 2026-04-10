@@ -8,16 +8,13 @@ def main():
     graphical user interface (gui) and launches it.
     """
 
-    data_container = {"PatientsDirectory": "sample_data/dicom_data", "CTSeries": None, "SeriesAcquisitionParameters": None,
-                      "Structures": None, "TreatmentPlan": None, "ComputedDose" : None, "StructuresMasks": None,
-                      "DoseMaps": None, "DoseVolumeHistograms": None,"AlgorithmsSettings": {"DoseGridInterpolationMethod": None,
-                                                                                            "DoseBinWidth": None,
-                                                                                            "ReferenceIsodose" : None}}
-
-    function_settings_container = {"InterpolationMethod" : "linear", "DoseBinWidth" : 0.05, "ReferenceIsodose" : 0.95}
+    data_container = {"PatientsDirectory": "sample_data/dicom_data", "SeriesAcquisitionParameters": None,
+                      "AlgorithmsSettings": {"DoseGridInterpolationMethod": None, "DoseBinWidth": None, "ReferenceIsodose": None},
+                      "CTSeries": None, "Structures": None, "ComputedDose" : None, "TreatmentPlan": None,
+                      "StructuresMasks": None, "DoseMaps": None, "DoseVolumeHistograms": None}
 
     app = QApplication()
-    app_window = assemble_gui(data_container, function_settings_container)
+    app_window = assemble_gui(data_container)
     app_window.showMaximized()
     app.exec()
 
