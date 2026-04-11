@@ -76,7 +76,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
         if re.search(r"[a-z]*[-_ ]*(external|ext|body|contour|patient)[-_ ]*[a-z]*",
                      structure_mask["StructureName"].lower()) is not None:
 
-            ct_series_layer = np.stack([slice["HUArray"] for slice in ct_series], axis=0)
+            ct_series_layer = np.stack([slice["Image"] for slice in ct_series], axis=0)
             body_contour_volumetric_mask = structure_mask["VolumetricMask"]
 
             # After applying the body contour mask (in order to hide/remove structures outside the patient's anatomy),

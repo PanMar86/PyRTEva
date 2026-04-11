@@ -103,9 +103,9 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
                 if dose_grid_planes_indices[ct_slice_index] != -1:
 
-                    planar_dose_maps.append({"DoseMap": computed_dose["ScaledDoseArray"][dose_grid_planes_indices[ct_slice_index], :, :],
+                    planar_dose_maps.append({"DoseMap": computed_dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :],
                                              "ReferencedSOPInstanceUID": ct_series[ct_slice_index]["SOPInstanceUID"]})
-                    volumetric_dose_map[ct_slice_index, :, :] = computed_dose["ScaledDoseArray"][dose_grid_planes_indices[ct_slice_index], :, :]
+                    volumetric_dose_map[ct_slice_index, :, :] = computed_dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :]
 
                 else:
 
@@ -324,7 +324,7 @@ def planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_f
     dose_plane_points_y_coordinate = np.array([x * computed_dose["DoseGridPlanarSpacing"][0]
                                                for x in range(computed_dose["DoseGridPlanarDimensions"][0])], dtype = np.float32)
     interpolator = RegularGridInterpolator((dose_plane_points_y_coordinate, dose_plane_points_x_coordinate),
-                                           computed_dose["ScaledDoseArray"][grid_frame_index, :, :], method = interpolation_method)
+                                           computed_dose["DoseDistribution"][grid_frame_index, :, :], method = interpolation_method)
 
     # Define the points of the resampled dose grid plane. The resampled plane covers approximately (due to the rounding
     # operation) the same physical space as the original dose plane.

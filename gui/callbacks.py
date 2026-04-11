@@ -5,9 +5,9 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
 from gui.components import generate_report_tables, generate_user_preferences_window
 from dicom_io.ct_series import load_ct_series
-from dicom_io.rt_struct import load_structures
-from dicom_io.rt_dose import load_computed_dose
-from dicom_io.rt_plan import load_structures_prescribed_doses
+from dicom_io.structures import load_structures
+from dicom_io.dose import load_dose
+from dicom_io.plan import load_plan
 from dicom_io.validators import validate_directory_structure
 from computations.structures_masks import generate_structures_masks
 from computations.dose_maps import generate_dose_maps
@@ -50,14 +50,15 @@ def load_patient_data(data_container, status_bar):
     update_status_bar(status_bar, "RT structures have been imported successfully.")
 
     update_status_bar(status_bar, "Computed dose is being imported...")
-    computed_dose = load_computed_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
-                                       data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
+    computed_dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
+                              data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
     data_container["ComputedDose"] = computed_dose
     update_status_bar(status_bar, "Computed dose has been successfully imported.")
 
     update_status_bar(status_bar, "Treatment plan is being imported. Please wait...")
-    structures_prescribed_doses = load_structures_prescribed_doses(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
-    data_container["StructuresPrescribedDoses"] = structures_prescribed_doses
+    plan_parameters = load_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
+    prescribed_doses = plan_parameters["PrescribedDoses"]
+    data_container["PrescribedDoses"] = prescribed_doses
     update_status_bar(status_bar, "Treatment plan has been imported successfully.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
@@ -194,7 +195,7 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
 
     viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
                                     data_container["StructuresMasks"], data_container["DoseMaps"],
-                                    data_container["StructuresPrescribedDoses"][0]["PrescribedDose"], visualization_mode, display_mode)
+                                    data_container["PrescribedDoses"][0]["PrescribedDose"], visualization_mode, display_mode)
 
     customize_viewer(viewer)
 
@@ -233,7 +234,7 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     temporary_content.deleteLater()
 
     dvhs_plot = plot_dose_volume_histograms(data_container["DoseVolumeHistograms"],
-                                            data_container["StructuresPrescribedDoses"][0]["PrescribedDose"])
+                                            data_container["PrescribedDoses"][0]["PrescribedDose"])
     dvh_panel.layout().addWidget(dvhs_plot)
 
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
@@ -280,7 +281,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(tumorous_structures_dvhs + oars_dvhs)
     dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
     dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
-                                                            data_container["StructuresPrescribedDoses"][0]["PrescribedDose"],
+                                                            data_container["PrescribedDoses"][0]["PrescribedDose"],
                                                             data_container["AlgorithmsSettings"]["ReferenceIsodose"],
                                                             tumorous_structures_dvhs, oars_dvhs)
 

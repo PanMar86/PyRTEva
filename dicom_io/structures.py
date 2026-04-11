@@ -24,8 +24,8 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
         List of structures. Each dictionary contains:
         - "StructureName" : str
             Name of the structure.
-        - "StructureInterpretedType" : str
-            Interpreted type of the structure (e.g., ORGAN, CONTROL).
+        - "StructureType" : str
+            Type of the structure.
         - "ContoursOnReferencedImages" : list of dict
             List of contour data associated with referenced slices. Each dictionary contains:
             - "ContourPoints" : numpy.ndarray
@@ -62,7 +62,7 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
 
         # First-line structure identification.
         structure_interpreted_type = structures_data.RTROIObservationsSequence[structure_index].RTROIInterpretedType
-        structure_type = identify_rt_structures(structure_name, structure_interpreted_type)
+        structure_type = identify_structure_type(structure_name, structure_interpreted_type)
 
         # Omit all pseudo-structures commonly used during plan optimization.
         if ((re.search("ring", structure_name.lower()) is None) and not
@@ -79,17 +79,18 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
                                                               ContourSequence[contour].ContourImageSequence[0].ReferencedSOPInstanceUID})
 
             structure = {"StructureName" : structure_name,
+                         "StructureType": structure_type,
                          "StructureInterpretedType" : structure_interpreted_type,
-                         "ContoursOnReferencedImages" : contours,
-                         "StructureType" : structure_type}
+                         "ContoursOnReferencedImages" : contours}
+
             structures.append(structure)
 
     return structures
 
 
-def identify_rt_structures(structure_name, structure_interpreted_type):
+def identify_structure_type(structure_name, structure_interpreted_type):
     """
-    This function uses regular expressions in order to classify the structure into five custom types: "Tumorous Structure",
+    This function uses regular expressions in order to classify the structures into five custom types: "Tumorous Structure",
     "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)", "Other".
 
     Parameters
@@ -98,7 +99,7 @@ def identify_rt_structures(structure_name, structure_interpreted_type):
         Name of the structure.
 
     structure_interpreted_type : str
-        Interpreted type of the structure (e.g., ORGAN, CONTROL).
+        Interpreted type of the structure (e.g., GTV, CTV, PTV, ORGAN, CONTROL).
 
     Returns
     -------

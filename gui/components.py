@@ -1,7 +1,7 @@
 import napari
 from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QDialog,
-                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget, QMessageBox,
-                            QTabWidget, QHeaderView, QAbstractItemView)
+                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget,
+                            QMessageBox, QTabWidget, QHeaderView, QAbstractItemView)
 from qtpy.QtCore import Qt, QSize
 
 
@@ -199,10 +199,11 @@ def generate_user_preferences_window(data_container):
         else:
 
             # Set the first occurring prescribed dose value.
-            structure_prescribed_dose.setValue(data_container["StructuresPrescribedDoses"][0]["PrescribedDose"])
+            structure_prescribed_dose.setValue(data_container["PrescribedDoses"][0]["PrescribedDose"])
 
         # Change the state (if necessary) of the prescribed dose widget according to the user-selected structure type.
-        structure_type.currentTextChanged.connect(lambda signal_text, widget = structure_prescribed_dose : change_state_prescribed_dose_widget(signal_text, widget))
+        structure_type.currentTextChanged.connect(lambda signal_text, widget = structure_prescribed_dose :
+                                                  change_state_prescribed_dose_widget(signal_text, widget))
 
         structure_info_layout.addWidget(QLabel(structure["StructureName"]))
         structure_info_layout.addWidget(QLabel("Structure type:"))
@@ -217,13 +218,15 @@ def generate_user_preferences_window(data_container):
 
     structures_info_scrollable_area.setWidget(structures_info_inner_container)
 
-    if len(data_container["StructuresPrescribedDoses"]) == 1:
-        additional_message = f"They have also been detected {len(data_container["StructuresPrescribedDoses"])} structures with different prescribed doses associated with them. "
+    if len(data_container["PrescribedDoses"]) > 1:
+        additional_message = (f"They have also been detected {len(data_container["PrescribedDoses"])} structures "
+                              f"with different prescribed doses associated with them. ")
     else:
         additional_message = ""
 
     structures_info_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
-                                     f"Please verify that the pre-assigned structure types, as well as the prescribed doses (to the structures for which prescribed doses are applicable) are correct.")
+                                     f"Please verify that the pre-assigned structure types, as well as the prescribed doses "
+                                     f"(to the structures for which prescribed doses are applicable) are correct.")
     structures_info_message.setWordWrap(True)
 
     structures_info_outer_container_layout.addWidget(structures_info_message)
