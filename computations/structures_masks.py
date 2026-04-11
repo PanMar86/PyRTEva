@@ -25,6 +25,8 @@ def generate_structures_masks(ct_series, ct_series_acquisition_parameters, struc
         List of generated structures masks. Each dictionary contains:
         - "StructureName" : str
             Name of the structure.
+        - "StructureType" : str
+            Type of the structure.
         - "PlanarMasksOnReferencedImages" : list of dict
             List of planar masks for the structure. Each dictionary contains:
             - "PlanarMask" : numpy.ndarray
@@ -69,6 +71,7 @@ def generate_structures_masks(ct_series, ct_series_acquisition_parameters, struc
         structure_merged_planar_masks = merge_planar_masks(structure_planar_masks, slice_dimensions)
         volumetric_mask = generate_volumetric_mask(ct_series, ct_series_acquisition_parameters, structure_merged_planar_masks)
         structures_masks.append({"StructureName": structure["StructureName"],
+                                 "StructureType": structure["StructureType"],
                                  "PlanarMasksOnReferencedImages": structure_merged_planar_masks,
                                  "VolumetricMask": volumetric_mask})
 

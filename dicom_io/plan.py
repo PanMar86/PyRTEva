@@ -56,11 +56,9 @@ def load_plan(patient_dir_path, ct_series_frame_of_reference_uid):
 
     for index in range(len(plan_data.DoseReferenceSequence)):
 
-        prescribe_dose = {"DoseReferenceType" : plan_data.DoseReferenceSequence[index].DoseReferenceType,
-                          "DoseReferenceDescription" : plan_data.DoseReferenceSequence[index].DoseReferenceDescription,
-                          "PrescribedDose" : plan_data.DoseReferenceSequence[index].TargetPrescriptionDose}
-
-        prescribed_doses.append(prescribe_dose)
+        prescribed_doses.append({"DoseReferenceType" : plan_data.DoseReferenceSequence[index].DoseReferenceType,
+                                 "DoseReferenceDescription" : plan_data.DoseReferenceSequence[index].DoseReferenceDescription,
+                                 "PrescribedDose" : plan_data.DoseReferenceSequence[index].TargetPrescriptionDose})
 
     plan_parameters = {"PrescribedDoses" : prescribed_doses}
 

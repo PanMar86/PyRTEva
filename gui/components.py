@@ -1,7 +1,7 @@
 import napari
 from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QDialog,
                             QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget,
-                            QMessageBox, QTabWidget, QHeaderView, QAbstractItemView)
+                            QMessageBox, QTabWidget, QHeaderView, QAbstractItemView, QCheckBox)
 from qtpy.QtCore import Qt, QSize
 
 
@@ -120,6 +120,7 @@ def generate_user_preferences_window(data_container):
     alg_settings_outer_container = QGroupBox("Algorithms settings")
     alg_settings_outer_container.setObjectName("alg_setting_outer_container")
     alg_settings_outer_container_layout = QVBoxLayout()
+    alg_settings_outer_container_layout.setContentsMargins(10,25,10,10)
 
     alg_settings_inner_container = QWidget()
     alg_settings_inner_container.setObjectName("alg_settings_inner_container")
@@ -163,6 +164,7 @@ def generate_user_preferences_window(data_container):
     structures_info_outer_container = QGroupBox("Structures info")
     structures_info_outer_container.setObjectName("structures_info_outer_container")
     structures_info_outer_container_layout = QVBoxLayout()
+    structures_info_outer_container_layout.setContentsMargins(10,25,10,20)
 
     structures_info_scrollable_area = QScrollArea()
     structures_info_scrollable_area.setObjectName("structures_info_scrollable_area")
@@ -180,6 +182,7 @@ def generate_user_preferences_window(data_container):
         structure_info = QGroupBox()
         structure_info_layout = QHBoxLayout()
         structure_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        structure_info_layout.setContentsMargins(0,10,0,10)
 
         structure_type = QComboBox()
         structure_type.setObjectName(structure["StructureName"].lower() + "_type")
@@ -224,12 +227,27 @@ def generate_user_preferences_window(data_container):
     else:
         additional_message = ""
 
-    structures_info_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
+    structures_info_principal_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
                                      f"Please verify that the pre-assigned structure types, as well as the prescribed doses "
                                      f"(to the structures for which prescribed doses are applicable) are correct.")
-    structures_info_message.setWordWrap(True)
+    structures_info_principal_message.setWordWrap(True)
 
-    structures_info_outer_container_layout.addWidget(structures_info_message)
+    structures_info_mid_container = QWidget()
+    structures_info_mid_container_layout = QHBoxLayout()
+    structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
+
+    structures_info_secondary_message = QLabel("Include optimization structures in visualization panels:")
+
+    opt_structures_visualization = QCheckBox()
+    opt_structures_visualization.setObjectName("opt_structures_visualization")
+
+    structures_info_mid_container_layout.addWidget(structures_info_secondary_message)
+    structures_info_mid_container_layout.addWidget(opt_structures_visualization)
+    structures_info_mid_container.setLayout(structures_info_mid_container_layout)
+
+    structures_info_outer_container_layout.addWidget(structures_info_principal_message)
+    structures_info_outer_container_layout.addWidget(structures_info_mid_container)
     structures_info_outer_container_layout.addWidget(structures_info_scrollable_area)
     structures_info_outer_container.setLayout(structures_info_outer_container_layout)
 

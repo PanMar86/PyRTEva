@@ -89,14 +89,14 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
     dose_distribution = np.array(dose_data.pixel_array * dose_data.DoseGridScaling, dtype = np.float64)
 
     dose = {"DoseDistribution" : dose_distribution,
-                     "MaximumDose" : np.max(dose_distribution),
-                     "DoseType" : dose_data.DoseType,
-                     "DoseUnits" : dose_data.DoseUnits,
-                     "DoseGridPlanarDimensions" : [dose_data.Rows, dose_data.Columns],
-                     "DoseGridFrames" : dose_data.NumberOfFrames,
-                     "DoseGridPlanarSpacing" : dose_data.PixelSpacing,
-                     "DoseGridFrameOffsetVector" : dose_data.GridFrameOffsetVector,
-                     "DoseGridOrientationPatient" : dose_data.ImageOrientationPatient,
-                     "DoseGridPositionPatient" : dose_data.ImagePositionPatient}
+            "MaximumDose" : np.max(dose_distribution),
+            "DoseType" : dose_data.DoseType,
+            "DoseUnits" : dose_data.DoseUnits,
+            "DoseGridPlanarDimensions" : [dose_data.Rows, dose_data.Columns],
+            "DoseGridFrames" : dose_data.NumberOfFrames,
+            "DoseGridPlanarSpacing" : dose_data.PixelSpacing,
+            "DoseGridFrameOffsetVector" : dose_data.GridFrameOffsetVector,
+            "DoseGridOrientationPatient" : dose_data.ImageOrientationPatient,
+            "DoseGridPositionPatient" : dose_data.ImagePositionPatient}
 
     return dose

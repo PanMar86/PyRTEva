@@ -6,7 +6,7 @@ import re
 
 
 def generate_visualisation(ct_series, ct_series_acquisition_parameters, structures_masks, dose_maps,
-                           prescribed_dose, visualization_mode, display_mode):
+                           prescribed_dose, visualization_mode, display_mode, optimization_structures_inclusion):
     """
     This function generates and configures a multi-layer Napari viewer. The visualization and display modes dictate
     what type of layers (CT series, volumetric dose map, volumetric structure mask, advanced visualization layer)
@@ -39,6 +39,9 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
         Display mode. Supported modes are:
         - "2D" : Two-dimensional visualization.
         - "3D" : Three-dimensional visualization.
+
+    optimization_structures_inclusion : bool
+        Whether to include the optimization structures or not.
 
     Returns
     -------
@@ -73,8 +76,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     # Create the CT Series layer, which is common to all visualization modes.
     for structure_mask in structures_masks:
 
-        if re.search(r"[a-z]*[-_ ]*(external|ext|body|contour|patient)[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is not None:
+        if structure_mask["StructureType"] == "External Body Contour":
 
             ct_series_layer = np.stack([slice["Image"] for slice in ct_series], axis=0)
             body_contour_volumetric_mask = structure_mask["VolumetricMask"]
@@ -156,8 +158,7 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
 
     for structure_mask in structures_masks:
 
-        if re.search(r"[a-z]*[-_ ]*(external|ext|body|contour|patient)[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is not None:
+        if structure_mask["StructureType"] == "External Body Contour":
 
             body_contour_volumetric_mask = structure_mask["VolumetricMask"]
             volumetric_dose_map = np.where(body_contour_volumetric_mask != 0, dose_maps["VolumetricDoseMap"], 0)

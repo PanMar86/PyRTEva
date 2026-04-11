@@ -60,30 +60,22 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
 
         structure_name = structures_data.StructureSetROISequence[structure_index].ROIName
 
-        # First-line structure identification.
+        # First-line structure type identification.
         structure_interpreted_type = structures_data.RTROIObservationsSequence[structure_index].RTROIInterpretedType
         structure_type = identify_structure_type(structure_name, structure_interpreted_type)
 
-        # Omit all pseudo-structures commonly used during plan optimization.
-        if ((re.search("ring", structure_name.lower()) is None) and not
-           ((structure_interpreted_type.lower() == "organ" or structure_interpreted_type.lower() == "control") and
-            (re.search(r"\d", structure_name.lower()) is not None))):
+        contours = []
 
-            contours = []
+        for contour_index in range(len(structures_data.ROIContourSequence[structure_index].ContourSequence)):
 
-            for contour in range(len(structures_data.ROIContourSequence[structure_index].ContourSequence)):
+            contours.append({"ContourPoints" : np.array(structures_data.ROIContourSequence[structure_index].
+                                               ContourSequence[contour_index].ContourData, dtype = np.float64).reshape((-1,3)),
+                             "ReferencedSOPInstanceUID" : structures_data.ROIContourSequence[structure_index].
+                                                          ContourSequence[contour_index].ContourImageSequence[0].ReferencedSOPInstanceUID})
 
-                contours.append({"ContourPoints" : np.array(structures_data.ROIContourSequence[structure_index].
-                                                   ContourSequence[contour].ContourData, dtype = np.float64).reshape((-1,3)),
-                                 "ReferencedSOPInstanceUID" : structures_data.ROIContourSequence[structure_index].
-                                                              ContourSequence[contour].ContourImageSequence[0].ReferencedSOPInstanceUID})
-
-            structure = {"StructureName" : structure_name,
-                         "StructureType": structure_type,
-                         "StructureInterpretedType" : structure_interpreted_type,
-                         "ContoursOnReferencedImages" : contours}
-
-            structures.append(structure)
+        structures.append({"StructureName" : structure_name,
+                           "StructureType": structure_type,
+                           "ContoursOnReferencedImages" : contours})
 
     return structures
 

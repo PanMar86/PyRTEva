@@ -1,6 +1,6 @@
 import napari
 import pickle
-from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox
+from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
 from gui.components import generate_report_tables, generate_user_preferences_window
@@ -85,35 +85,39 @@ def apply_user_preferences(data_container, status_bar):
     user_preferences_window = generate_user_preferences_window(data_container)
     user_preferences_window.exec()
 
-    # Apply algorithms settings.
     dose_grid_interpolation_method =  user_preferences_window.findChild(QComboBox,"dose_grid_interpolation_method").currentText()
     data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"] = dose_grid_interpolation_method
     dose_bin_width = user_preferences_window.findChild(QDoubleSpinBox,"dose_bin_width").value()
     data_container["AlgorithmsSettings"]["DoseBinWidth"] = dose_bin_width
     reference_isodose = user_preferences_window.findChild(QDoubleSpinBox,"reference_isodose").value()
     data_container["AlgorithmsSettings"]["ReferenceIsodose"] = reference_isodose
+    opt_structures_visualization = user_preferences_window.findChild(QCheckBox,"opt_structures_visualization").isChecked()
+    data_container["OptimizationStructuresVisualization"] = opt_structures_visualization
+
+    # Store the user-approved structures' types and prescribed doses. Since the dictionaries related to prescribed doses
+    # have now slightly different keys, reset the container-list.
+    data_container["PrescribedDoses"] = []
 
     for structure in data_container["Structures"]:
 
-        # Apply structures' types.
         structure_type = user_preferences_window.findChild(QComboBox, structure["StructureName"].lower() + "_type").currentText()
 
         if structure["StructureType"] != structure_type:
 
             structure["StructureType"] = structure_type
 
-        # Apply structures' prescribed doses.
-        structure_prescribed_dose_widget = user_preferences_window.findChild(QSpinBox, structure["StructureName"].lower() + "_prescribed_dose")
+        prescribed_dose_widget = user_preferences_window.findChild(QSpinBox, structure["StructureName"].lower() + "_prescribed_dose")
 
-        if structure_prescribed_dose_widget.isEnabled():
+        if prescribed_dose_widget.isEnabled():
 
-            structure_prescribed_dose = structure_prescribed_dose_widget.value()
+            prescribed_dose = prescribed_dose_widget.value()
 
         else:
 
-            structure_prescribed_dose = None
+            prescribed_dose = None
 
-        structure["PrescribedDose"] = structure_prescribed_dose
+        data_container["PrescribedDoses"].append({"StructureName" : structure["StructureName"],
+                                                  "PrescribedDose" : prescribed_dose})
 
     update_status_bar(status_bar, "User preferences have been successfully applied.")
 
@@ -140,7 +144,7 @@ def generate_intermediate_data(data_container, status_bar):
 
     update_status_bar(status_bar, "Structures masks are being generated. Please wait...")
     structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"], data_container["Structures"])
-    data_container["StructuresMasks"] = structures_masks
+    data_container["Masks"] = structures_masks
     update_status_bar(status_bar, "Structures masks have been generated successfully.")
 
     update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
@@ -149,8 +153,8 @@ def generate_intermediate_data(data_container, status_bar):
     data_container["DoseMaps"] = dose_maps
     update_status_bar(status_bar, "Dose maps have been generated successfully.")
 
-    dose_volume_histograms = generate_dose_volume_histograms(data_container["SeriesAcquisitionParameters"], structures_masks,
-                                                             dose_maps, data_container["AlgorithmsSettings"]["DoseBinWidth"])
+    dose_volume_histograms = generate_dose_volume_histograms(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
+                                                             data_container["DoseMaps"], data_container["AlgorithmsSettings"]["DoseBinWidth"])
     data_container["DoseVolumeHistograms"] = dose_volume_histograms
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
@@ -194,8 +198,9 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
     temporary_content.deleteLater()
 
     viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
-                                    data_container["StructuresMasks"], data_container["DoseMaps"],
-                                    data_container["PrescribedDoses"][0]["PrescribedDose"], visualization_mode, display_mode)
+                                    data_container["Masks"], data_container["DoseMaps"],
+                                    data_container["PrescribedDoses"][13]["PrescribedDose"], visualization_mode, display_mode,
+                                    data_container["OptimizationStructuresVisualization"])
 
     customize_viewer(viewer)
 
@@ -234,7 +239,7 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     temporary_content.deleteLater()
 
     dvhs_plot = plot_dose_volume_histograms(data_container["DoseVolumeHistograms"],
-                                            data_container["PrescribedDoses"][0]["PrescribedDose"])
+                                            data_container["PrescribedDoses"][13]["PrescribedDose"])
     dvh_panel.layout().addWidget(dvhs_plot)
 
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
@@ -281,7 +286,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(tumorous_structures_dvhs + oars_dvhs)
     dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
     dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
-                                                            data_container["PrescribedDoses"][0]["PrescribedDose"],
+                                                            data_container["PrescribedDoses"][13]["PrescribedDose"],
                                                             data_container["AlgorithmsSettings"]["ReferenceIsodose"],
                                                             tumorous_structures_dvhs, oars_dvhs)
 

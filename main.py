@@ -8,10 +8,11 @@ def main():
     graphical user interface (gui) and launches it.
     """
 
-    data_container = {"PatientsDirectory": "sample_data/dicom_data", "SeriesAcquisitionParameters": None,
+    data_container = {"PatientsDirectory": "sample_data/dicom_data",
                       "AlgorithmsSettings": {"DoseGridInterpolationMethod": None, "DoseBinWidth": None, "ReferenceIsodose": None},
-                      "CTSeries": None, "Structures": None, "ComputedDose" : None, "PrescribedDoses": None,
-                      "StructuresMasks": None, "DoseMaps": None, "DoseVolumeHistograms": None}
+                      "CTSeries": None, "SeriesAcquisitionParameters": None, "Structures": None, "ComputedDose" : None,
+                      "PrescribedDoses": None, "Masks": None, "DoseMaps": None, "DoseVolumeHistograms": None,
+                      "OptimizationStructuresVisualization": None}
 
     app = QApplication()
     app_window = assemble_gui(data_container)
