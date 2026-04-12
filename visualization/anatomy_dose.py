@@ -2,15 +2,13 @@ import numpy as np
 import matplotlib
 import napari
 from napari.utils import Colormap, colormaps
-import re
 
 
 def generate_visualisation(ct_series, ct_series_acquisition_parameters, structures_masks, dose_maps,
-                           prescribed_dose, visualization_mode, display_mode, optimization_structures_inclusion):
+                           prescribed_doses, visualization_mode, display_mode, optimization_structures_inclusion):
     """
     This function generates and configures a multi-layer Napari viewer. The visualization and display modes dictate
-    what type of layers (CT series, volumetric dose map, volumetric structure mask, advanced visualization layer)
-    are present on the viewer.
+    which types of layers (CT series, dose map, structure mask, advanced visualization layer) are present on the viewer.
 
     Parameters
     ----------
@@ -26,8 +24,8 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     dose_maps : dict
         Dictionary containing the generated dose maps.
 
-    prescribed_dose : float
-        Prescribed dose value, expressed in Gy.
+    prescribed_doses : list
+        Prescribed dose values, expressed in Gy.
 
     visualization_mode : str
         Visualization mode. Supported modes are:
@@ -52,72 +50,44 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     # Set up some custom colormaps before the viewer creation.
     custom_colormaps = generate_custom_colormaps()
     colormaps.AVAILABLE_COLORMAPS.clear()
-
     for custom_colormap in custom_colormaps:
-
         colormaps.AVAILABLE_COLORMAPS.update({custom_colormap.name : custom_colormap})
 
     # Switch between different visualization modes.
     if visualization_mode == "Standard":
-
-        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps,
-                                                    display_mode)
-
+        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, optimization_structures_inclusion)
     elif visualization_mode == "Dose Homogeneity":
-
-        viewer, scale = dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks,
-                                                            dose_maps, prescribed_dose, display_mode)
-
+        viewer, scale = dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_doses, display_mode)
     elif visualization_mode == "Dose Gradient":
-
-        viewer, scale = dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps,
-                                                         display_mode)
+        viewer, scale = dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode)
 
     # Create the CT Series layer, which is common to all visualization modes.
     for structure_mask in structures_masks:
-
         if structure_mask["StructureType"] == "External Body Contour":
-
-            ct_series_layer = np.stack([slice["Image"] for slice in ct_series], axis=0)
-            body_contour_volumetric_mask = structure_mask["VolumetricMask"]
-
+            ct_series = np.stack([slice["Image"] for slice in ct_series], axis=0)
             # After applying the body contour mask (in order to hide/remove structures outside the patient's anatomy),
             # regions outside patient's anatomy will have zero values, messing up with the proper visualisation of HUs.
             # Adding an offset value before the application of the mask immediately solves the problem.
-            maximum_hu_value = np.max(ct_series_layer)
-            minimum_hu_value = np.min(ct_series_layer)
+            maximum_hu_value = np.max(ct_series)
+            minimum_hu_value = np.min(ct_series)
             offset = np.abs(minimum_hu_value)
-            ct_series_layer += offset
-            ct_series_layer = np.where(body_contour_volumetric_mask != 0, ct_series_layer, 0)
-
+            ct_series += offset
+            ct_series = np.where(structure_mask["VolumetricMask"] != 0, ct_series, 0)
             # Revert back to original HU values.
-            ct_series_layer -= offset
-
+            ct_series -= offset
+            viewer.add_image(ct_series, name="CT Series", scale=scale, blending="additive", contrast_limits=[minimum_hu_value, maximum_hu_value])
             break
 
-    viewer.add_image(ct_series_layer, name = "CT Series", scale = scale, blending= "additive",
-                     contrast_limits = [minimum_hu_value, maximum_hu_value])
-
-    # Re-order the CT Series and Volumetric Dose Map layers. The remaining layers' visibility is set to False.
+    # Re-order the CT Series layer.
     viewer.layers.move(viewer.layers.index("CT Series"), 0)
-
-    for layer in viewer.layers:
-
-        if layer.name == "Volumetric Dose Map":
-
-            viewer.layers.move(viewer.layers.index("Volumetric Dose Map"), 1)
-
-        elif layer.name not in ["CT Series", "Volumetric Dose Map", "Dose Homogeneity Map", "Dose Gradient Map"]:
-
-            layer.visible = False
 
     return viewer
 
 
-def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode):
+def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, optimization_structures_inclusion):
     """
-    This function creates and configures a multi-layer napari viewer. The viewer contains layers
-    associated with the CT series, the volumetric dose map and the volumetric structures masks.
+    This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
+    CT series, the dose map and the structures masks.
 
     Parameters
     ----------
@@ -135,56 +105,62 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
         - "2D" : Two-dimensional visualization.
         - "3D" : Three-dimensional visualization.
 
+    optimization_structures_inclusion : bool
+        Whether to include the optimization structures or not.
+
     Returns
     -------
     viewer : napari.Viewer
-        Configured napari viewer containing layers associated with the CT series, the volumetric dose map
-        and the volumetric structures masks.
+        Configured napari viewer containing layers associated with the CT series, the dose map
+        and the structures masks.
 
     scale : list of float
         Spatial scaling applied to the viewer layers.
     """
 
     if display_mode == "2D":
-
         viewer = napari.Viewer(ndisplay=2, show = False)
         scale = ct_series_acquisition_parameters["PixelSpacing"]
-
     elif display_mode == "3D":
-
         viewer = napari.Viewer(ndisplay=3, show = False)
         scale = [ct_series_acquisition_parameters["SliceThickness"], ct_series_acquisition_parameters["PixelSpacing"][0],
                  ct_series_acquisition_parameters["PixelSpacing"][1]]
 
+    # Determine the structures that will be included in the standard visualization mode.
+    if optimization_structures_inclusion:
+        included_structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)"]
+    elif not optimization_structures_inclusion:
+        included_structure_types = ["Tumorous Structure", "Organ At Risk"]
+
+    # Create the various visualization layers.
     for structure_mask in structures_masks:
-
         if structure_mask["StructureType"] == "External Body Contour":
-
-            body_contour_volumetric_mask = structure_mask["VolumetricMask"]
-            volumetric_dose_map = np.where(body_contour_volumetric_mask != 0, dose_maps["VolumetricDoseMap"], 0)
-
+            # Create the dose map layer.
+            dose_map = np.where(structure_mask["VolumetricMask"] != 0, dose_maps["VolumetricDoseMap"], 0)
             # In some cases, the heavy skewness of the dose distribution in conjunction with the normalization step
             # and the automatic set-up of the contrast limits prior to the visualization, produces extreme color
             # saturation. Therefore, the contrast limits are set manually.
-            maximum_dose = np.max(volumetric_dose_map)
-            viewer.add_image(volumetric_dose_map, name = "Volumetric Dose Map", scale = scale, opacity = 0.50,
+            maximum_dose = np.max(dose_map)
+            viewer.add_image(dose_map, name = "Dose Map", scale = scale, opacity = 0.50,
                              blending = "additive", contrast_limits = [0, maximum_dose], colormap = "turbo")
-
-        else:
-
+        elif structure_mask["StructureType"] in included_structure_types:
             viewer.add_image(structure_mask["VolumetricMask"], name = structure_mask["StructureName"], scale = scale,
-                             opacity = 0.30, blending = "additive", contrast_limits = [0, 1])
+                             opacity = 0.30, blending = "additive", contrast_limits = [0, 1], visible = False)
+
+    # Re-order the Dose Map layer.
+    viewer.layers.move(viewer.layers.index("Dose Map"), 0)
 
     return viewer, scale
 
 
-def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_dose, display_mode):
+def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_doses, display_mode):
     """
-    This function creates and configures a multi-layer napari viewer. The viewer contains layers
-    associated with the CT series and the dose homogeneity map. The dose homogeneity map serves as
-    a mean of visualizing the deviations from the prescribed dose, along the PTV region. The contrast
-    window is centered with respect to the prescribed dose value, so that in conjunction with a
-    diverging colormap, the underdosed and overdosed regions inside PTV are clearly highlighted.
+    This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
+    CT series and the dose homogeneity maps of the tumorous structures. The dose homogeneity maps serve as a mean of
+    visualizing the deviations from the prescribed dose (which might be different for each tumorous structure).
+    The contrast window of each homogeneity map is centered with respect to the prescribed dose value, so that in
+    conjunction with a diverging colormap, the underdosed and overdosed regions inside the tumorous structures are
+    clearly highlighted.
 
     Parameters
     ----------
@@ -197,8 +173,8 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     dose_maps : dict
         Dictionary containing the generated dose maps.
 
-    prescribed_dose : float
-        Prescribed dose, expressed in Gy.
+    prescribed_doses : list of dict
+        List of dose prescription parameters for each structure.
 
     display_mode : str
         Display mode. Supported modes are:
@@ -207,50 +183,43 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     Returns
     -------
     viewer : napari.Viewer
-        Configured napari viewer containing layers associated with the CT series and the dose homogeneity map.
+        Configured napari viewer containing layers associated with the CT series and the dose homogeneity maps.
 
     scale : list of float
         Spatial scaling applied to the viewer layers.
     """
 
     if display_mode == "2D":
-
         viewer = napari.Viewer(ndisplay = 2, show = False)
         scale = ct_series_acquisition_parameters["PixelSpacing"]
-
     elif display_mode == "3D":
-
         raise ValueError("3D Dose Homogeneity mode is not supported in the current version.")
 
+    # Create the various visualization layers.
     for structure_mask in structures_masks:
-
-        if re.search(r"\d*[-_ ]*[a-z]*[-_ ]*(ptv)[-_ ]*\d*[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is not None:
-
-            ptv_volumetric_mask = structure_mask["VolumetricMask"]
-            ptv_volumetric_dose_map = np.where(ptv_volumetric_mask, dose_maps["VolumetricDoseMap"], 0)
-            minimum_ptv_dose = np.min(ptv_volumetric_dose_map[ptv_volumetric_dose_map != 0])
-            maximum_ptv_dose = np.max(ptv_volumetric_dose_map)
-
+        if structure_mask["StructureType"] == "Tumorous Structure":
+            prescribed_dose = [prescribed_dose["PrescribedDose"] for prescribed_dose in prescribed_doses
+                               if prescribed_dose["StructureName"] == structure_mask["StructureName"]][0]
+            dose_homogeneity_map = np.where(structure_mask["VolumetricMask"], dose_maps["VolumetricDoseMap"], 0)
+            minimum_dose = np.min(dose_homogeneity_map[dose_homogeneity_map != 0])
+            maximum_dose = np.max(dose_homogeneity_map)
             # https://matplotlib.org/stable/users/explain/colors/colormaps.html
             # It is highly recommended that a diverging colormap be used for the proper visualization of the
             # dose homogeneity map.
-            contrast_window_width = 2 * np.max([maximum_ptv_dose - prescribed_dose, prescribed_dose - minimum_ptv_dose])
-            viewer.add_image(ptv_volumetric_dose_map, name = "Dose Homogeneity Map", scale = scale, opacity = 0.70,
-                             blending= "additive", contrast_limits = [prescribed_dose - (contrast_window_width / 2),
-                                                                      prescribed_dose + (contrast_window_width / 2)],
-                             colormap = "seismic")
-            break
+            contrast_window_width = 2 * np.max([maximum_dose - prescribed_dose, prescribed_dose - minimum_dose])
+            viewer.add_image(dose_homogeneity_map, name = f"Homogeneity Map ({structure_mask["StructureName"]})", scale=scale, opacity=0.70,
+                             blending="additive", contrast_limits=[prescribed_dose - (contrast_window_width / 2), prescribed_dose + (contrast_window_width / 2)],
+                             colormap="seismic", visible=False)
 
     return viewer, scale
 
 
 def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode):
     """
-    This function creates and configures a multi-layer napari viewer. The viewer contains layers
-    associated with the CT series, the PTV volumetric mask and dose gradient map. The dose gradient map
-    serves as a mean of visualizing the magnitude of the dose gradient in the region between the PTV and
-    the patient's external surface.
+    This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
+    CT series, the structures masks and the dose gradient maps of the planning target volumes (PTVs). The dose gradient
+    maps serve as a mean of visualizing the magnitude of the dose gradient in the region between the PTVs and the patient's
+    external surface.
 
     Parameters
     ----------
@@ -278,43 +247,30 @@ def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structure
     """
 
     if display_mode == "2D":
-
         viewer = napari.Viewer(ndisplay = 2, show = False)
         scale = ct_series_acquisition_parameters["PixelSpacing"]
-
     elif display_mode == "3D":
-
         raise ValueError("3D Dose Gradient mode is not supported in the current version.")
 
     for structure_mask in structures_masks:
-
-        if re.search(r"\d*[-_ ]*[a-z]*[-_ ]*(ptv)[-_ ]*\d*[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is not None:
-
-            ptv_volumetric_mask = structure_mask["VolumetricMask"]
-
+        if structure_mask["StructureType"] == "External Body Contour":
+            body_contour_mask = structure_mask["VolumetricMask"]
             break
 
     for structure_mask in structures_masks:
-
-        if re.search(r"[a-z]*[-_ ]*(external|ext|body|contour|patient)[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is not None:
-
-            body_contour_volumetric_mask = structure_mask["VolumetricMask"]
-
-            break
-
-    # The following mask is used to exclude the ptv region from the patient's anatomy.
-    gradient_shell_mask = ptv_volumetric_mask ^ body_contour_volumetric_mask
-    dose_gradient = np.gradient(dose_maps["VolumetricDoseMap"], ct_series_acquisition_parameters["SpacingBetweenSlices"],
-                                ct_series_acquisition_parameters["PixelSpacing"][0], ct_series_acquisition_parameters["PixelSpacing"][1])
-    dose_gradient_magnitude = np.sqrt(np.power(dose_gradient[0],2) + np.power(dose_gradient[1],2) + np.power(dose_gradient[2],2))
-    dose_gradient_map = np.where(gradient_shell_mask, dose_gradient_magnitude, 0)
-    maximum_dose_gradient_magnitude = np.max(dose_gradient_map)
-    viewer.add_image(dose_gradient_map, name = "Dose Gradient Map", scale = scale, blending= "additive",
-                     contrast_limits = [0, maximum_dose_gradient_magnitude], colormap = "inferno")
-    viewer.add_image(ptv_volumetric_mask, name = "PTV", scale = scale, opacity = 0.30, blending= "additive",
-                     contrast_limits = [0, 1])
+        # Identify all the structures masks associated with planning target volumes (ptvs).
+        if (structure_mask["StructureType"] == "Tumorous Structure") and ("ptv" in structure_mask["StructureName"].lower()):
+            # The following mask is used to exclude the ptv region from the patient's anatomy.
+            gradient_shell_mask = structure_mask["VolumetricMask"] ^ body_contour_mask
+            dose_gradient = np.gradient(dose_maps["VolumetricDoseMap"], ct_series_acquisition_parameters["SpacingBetweenSlices"],
+                                        ct_series_acquisition_parameters["PixelSpacing"][0], ct_series_acquisition_parameters["PixelSpacing"][1])
+            dose_gradient_magnitude = np.sqrt(np.power(dose_gradient[0],2) + np.power(dose_gradient[1],2) + np.power(dose_gradient[2],2))
+            dose_gradient_map = np.where(gradient_shell_mask, dose_gradient_magnitude, 0)
+            maximum_dose_gradient = np.max(dose_gradient_map)
+            viewer.add_image(dose_gradient_map, name = f"Gradient Map ({structure_mask["StructureName"]}) ", scale = scale, blending= "additive",
+                             contrast_limits = [0, maximum_dose_gradient], colormap = "hot", visible=False)
+            viewer.add_image(structure_mask["VolumetricMask"], name = structure_mask["StructureName"], scale = scale, opacity = 0.30, blending= "additive",
+                             contrast_limits = [0, 1], visible=False)
 
     return viewer, scale
 

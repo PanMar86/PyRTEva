@@ -2,7 +2,7 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
-def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dose, interpolation_method):
+def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_grid_interpolation_method):
     """
     This function generates planar and volumetric dose maps aligned to the CT series. Essentially, it evaluates the
     spatial alignment between the dose grid and the CT series. If the dose grid planes and the slices of the CT series
@@ -18,11 +18,11 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
     ct_series_acquisition_parameters : dict
         Dictionary containing acquisition parameters.
 
-    computed_dose : dict
+    dose : dict
         Dictionary containing the numpy array describing the dose distribution, along with parameters relevant to the
         dose grid.
 
-    interpolation_method : str
+    dose_grid_interpolation_method : str
         String representing the interpolation method used by the planar_interpolation function.
 
     Returns
@@ -44,8 +44,8 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
     """
 
     # Determine the alignment type (if any).
-    planar_alignment = verify_planar_alignment(ct_series_acquisition_parameters, computed_dose)
-    z_axis_alignment = verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose)
+    planar_alignment = verify_planar_alignment(ct_series_acquisition_parameters, dose)
+    z_axis_alignment = verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, dose)
 
     if planar_alignment and (not z_axis_alignment):
 
@@ -67,14 +67,14 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
         # Determine the type of the DoseGridFrameOffsetVector.
         # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
 
-        if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
+        if dose["DoseGridFrameOffsetVector"][0] == 0:
 
-            dose_grid_planes_z_positions = (np.array(computed_dose["DoseGridFrameOffsetVector"]) +
-                                            computed_dose["DoseGridPositionPatient"][2])
+            dose_grid_planes_z_positions = (np.array(dose["DoseGridFrameOffsetVector"]) +
+                                            dose["DoseGridPositionPatient"][2])
 
-        elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
+        elif dose["DoseGridFrameOffsetVector"][0] == dose["DoseGridPositionPatient"][2]:
 
-            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"])
+            dose_grid_planes_z_positions = np.array(dose["DoseGridFrameOffsetVector"])
 
         # For each slice of the CT series, store the index of the corresponding dose grid plane. An index value of -1
         # shows the absense of a dose grid plane for this particular slice.
@@ -103,9 +103,9 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
                 if dose_grid_planes_indices[ct_slice_index] != -1:
 
-                    planar_dose_maps.append({"DoseMap": computed_dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :],
+                    planar_dose_maps.append({"DoseMap": dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :],
                                              "ReferencedSOPInstanceUID": ct_series[ct_slice_index]["SOPInstanceUID"]})
-                    volumetric_dose_map[ct_slice_index, :, :] = computed_dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :]
+                    volumetric_dose_map[ct_slice_index, :, :] = dose["DoseDistribution"][dose_grid_planes_indices[ct_slice_index], :, :]
 
                 else:
 
@@ -119,11 +119,11 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
             # Map the upper-left pixel of the dose grid planes (origin) to the slices of the CT series.
             dose_grid_plane_origin_slice_coordinates = [np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][1] -
-                                                                         computed_dose["DoseGridPositionPatient"][1]) /
-                                                                         ct_series_acquisition_parameters["PixelSpacing"][0]), decimals=0).astype(np.uint16),
+                                                                         dose["DoseGridPositionPatient"][1]) /
+                                                                        ct_series_acquisition_parameters["PixelSpacing"][0]), decimals=0).astype(np.uint16),
                                                         np.round(np.abs((ct_series_acquisition_parameters["ImagePlanarPositionPatient"][0] -
-                                                                         computed_dose["DoseGridPositionPatient"][0]) /
-                                                                         ct_series_acquisition_parameters["PixelSpacing"][1]), decimals=0).astype(np.uint16)]
+                                                                         dose["DoseGridPositionPatient"][0]) /
+                                                                        ct_series_acquisition_parameters["PixelSpacing"][1]), decimals=0).astype(np.uint16)]
 
             for ct_slice_index in range(len(ct_series)):
 
@@ -131,7 +131,7 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
 
                     # Perform 2D (planar) interpolation, so that the spatial resolution of the dose grid planes matches
                     # the spatial resolution of the slices of the CT series.
-                    resampled_dose_grid_plane = planar_interpolation(ct_series_acquisition_parameters, computed_dose, dose_grid_planes_indices[ct_slice_index], interpolation_method)
+                    resampled_dose_grid_plane = planar_interpolation(ct_series_acquisition_parameters, dose, dose_grid_planes_indices[ct_slice_index], dose_grid_interpolation_method)
                     planar_dose_map[dose_grid_plane_origin_slice_coordinates[0] : dose_grid_plane_origin_slice_coordinates[0] + resampled_dose_grid_plane.shape[0],
                                     dose_grid_plane_origin_slice_coordinates[1] : dose_grid_plane_origin_slice_coordinates[1] + resampled_dose_grid_plane.shape[1]] = resampled_dose_grid_plane
 
@@ -145,7 +145,7 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, computed_dos
         return dose_maps
 
 
-def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
+def verify_planar_alignment(ct_series_acquisition_parameters, dose):
     """
     This function checks whether the dose grid planes are planarly aligned with the slices of the CT series. It explicitly
     checks properties such as plane origin, in-plane spacing and plane dimensions.
@@ -155,7 +155,7 @@ def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
     ct_series_acquisition_parameters : dict
         Dictionary containing acquisition parameters.
 
-    computed_dose : dict
+    dose : dict
         Dictionary containing the numpy array describing the dose distribution, along with parameters relevant to the
         dose grid.
 
@@ -166,19 +166,19 @@ def verify_planar_alignment(ct_series_acquisition_parameters, computed_dose):
     """
 
     origin_equality = np.allclose(ct_series_acquisition_parameters["ImagePlanarPositionPatient"],
-                                  computed_dose["DoseGridPositionPatient"][0:2], rtol = 0, atol = 0.01)
+                                  dose["DoseGridPositionPatient"][0:2], rtol = 0, atol = 0.01)
 
     in_plane_spacing_equality = np.allclose(ct_series_acquisition_parameters["PixelSpacing"],
-                                            computed_dose["DoseGridPlanarSpacing"], rtol = 0, atol = 0.01)
+                                            dose["DoseGridPlanarSpacing"], rtol = 0, atol = 0.01)
 
-    dimensions_equality = ct_series_acquisition_parameters["ImageDimensions"] == computed_dose["DoseGridPlanarDimensions"]
+    dimensions_equality = ct_series_acquisition_parameters["ImageDimensions"] == dose["DoseGridPlanarDimensions"]
 
     planar_alignment = origin_equality and in_plane_spacing_equality and dimensions_equality
 
     return planar_alignment
 
 
-def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, computed_dose):
+def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, dose):
     """
     This function checks whether the dose grid planes are z-axis aligned with the slices of the CT series (planar
     alignment is assessed via verify_planar_alignment function). It performs multiple consistency checks including dose
@@ -192,7 +192,7 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, compute
     ct_series_acquisition_parameters : dict
         Dictionary containing acquisition parameters.
 
-    computed_dose : dict
+    dose : dict
         Dictionary containing the numpy array describing the dose distribution, along with parameters relevant to the
         dose grid.
 
@@ -205,7 +205,7 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, compute
     z_axis_alignment = False
 
     # Check if the z-spacing between the dose grid planes is constant and equal to the spacing between the slices of the CT series.
-    z_axis_spacing_equality = verify_z_axis_spacing_equality(computed_dose["DoseGridFrameOffsetVector"], ct_series_acquisition_parameters)
+    z_axis_spacing_equality = verify_z_axis_spacing_equality(dose["DoseGridFrameOffsetVector"], ct_series_acquisition_parameters)
 
     if not z_axis_spacing_equality:
 
@@ -218,13 +218,13 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, compute
         # Determine the type of the DoseGridFrameOffsetVector
         # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
 
-        if computed_dose["DoseGridFrameOffsetVector"][0] == 0:
+        if dose["DoseGridFrameOffsetVector"][0] == 0:
 
-            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"]) + computed_dose["DoseGridPositionPatient"][2]
+            dose_grid_planes_z_positions = np.array(dose["DoseGridFrameOffsetVector"]) + dose["DoseGridPositionPatient"][2]
 
-        elif computed_dose["DoseGridFrameOffsetVector"][0] == computed_dose["DoseGridPositionPatient"][2]:
+        elif dose["DoseGridFrameOffsetVector"][0] == dose["DoseGridPositionPatient"][2]:
 
-            dose_grid_planes_z_positions = np.array(computed_dose["DoseGridFrameOffsetVector"])
+            dose_grid_planes_z_positions = np.array(dose["DoseGridFrameOffsetVector"])
 
         # Check if at least one dose grid plane coincides with a slice of the CT series.
 
@@ -285,7 +285,7 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
     return z_axis_spacing_equality
 
 
-def planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_frame_index, interpolation_method):
+def planar_interpolation(ct_series_acquisition_parameters, dose, grid_frame_index, interpolation_method):
     """
     This function resamples a dose grid plane so that its spatial resolution matches that of the slices of the CT series.
 
@@ -294,7 +294,7 @@ def planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_f
     ct_series_acquisition_parameters : dict
         Dictionary containing acquisition parameters.
 
-    computed_dose : dict
+    dose : dict
         Dictionary containing the numpy array describing the dose distribution, along with parameters relevant to the
         dose grid.
 
@@ -319,17 +319,17 @@ def planar_interpolation(ct_series_acquisition_parameters, computed_dose, grid_f
     # First, construct the RegularGridInterpolator object based on the X and Y coordinates of the points of the dose
     # grid plane. The origin is defined as the center of the upper-left pixel of the dose grid plane. X-axis is parallel
     # to the rows whereas Y-axis is parallel to the columns of the dose grid plane.
-    dose_plane_points_x_coordinate = np.array([x * computed_dose["DoseGridPlanarSpacing"][1]
-                                               for x in range(computed_dose["DoseGridPlanarDimensions"][1])], dtype = np.float32)
-    dose_plane_points_y_coordinate = np.array([x * computed_dose["DoseGridPlanarSpacing"][0]
-                                               for x in range(computed_dose["DoseGridPlanarDimensions"][0])], dtype = np.float32)
+    dose_plane_points_x_coordinate = np.array([x * dose["DoseGridPlanarSpacing"][1]
+                                               for x in range(dose["DoseGridPlanarDimensions"][1])], dtype = np.float32)
+    dose_plane_points_y_coordinate = np.array([x * dose["DoseGridPlanarSpacing"][0]
+                                               for x in range(dose["DoseGridPlanarDimensions"][0])], dtype = np.float32)
     interpolator = RegularGridInterpolator((dose_plane_points_y_coordinate, dose_plane_points_x_coordinate),
-                                           computed_dose["DoseDistribution"][grid_frame_index, :, :], method = interpolation_method)
+                                           dose["DoseDistribution"][grid_frame_index, :, :], method = interpolation_method)
 
     # Define the points of the resampled dose grid plane. The resampled plane covers approximately (due to the rounding
     # operation) the same physical space as the original dose plane.
-    dose_plane_x_axis_length = (computed_dose["DoseGridPlanarDimensions"][1] - 1) * computed_dose["DoseGridPlanarSpacing"][1]
-    dose_plane_y_axis_length = (computed_dose["DoseGridPlanarDimensions"][0] - 1) * computed_dose["DoseGridPlanarSpacing"][0]
+    dose_plane_x_axis_length = (dose["DoseGridPlanarDimensions"][1] - 1) * dose["DoseGridPlanarSpacing"][1]
+    dose_plane_y_axis_length = (dose["DoseGridPlanarDimensions"][0] - 1) * dose["DoseGridPlanarSpacing"][0]
     resampled_dose_plane_points_x_coordinate = np.array([x * ct_series_acquisition_parameters["PixelSpacing"][1]
                                                          for x in range(np.round((dose_plane_x_axis_length /
                                                                                   ct_series_acquisition_parameters["PixelSpacing"][1]),

@@ -1,5 +1,6 @@
 import napari
 import pickle
+from pprint import pprint
 from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
@@ -117,6 +118,7 @@ def apply_user_preferences(data_container, status_bar):
             prescribed_dose = None
 
         data_container["PrescribedDoses"].append({"StructureName" : structure["StructureName"],
+                                                  "StructureType" : structure["StructureType"],
                                                   "PrescribedDose" : prescribed_dose})
 
     update_status_bar(status_bar, "User preferences have been successfully applied.")
@@ -199,7 +201,7 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
 
     viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
                                     data_container["Masks"], data_container["DoseMaps"],
-                                    data_container["PrescribedDoses"][13]["PrescribedDose"], visualization_mode, display_mode,
+                                    data_container["PrescribedDoses"], visualization_mode, display_mode,
                                     data_container["OptimizationStructuresVisualization"])
 
     customize_viewer(viewer)
@@ -239,7 +241,7 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     temporary_content.deleteLater()
 
     dvhs_plot = plot_dose_volume_histograms(data_container["DoseVolumeHistograms"],
-                                            data_container["PrescribedDoses"][13]["PrescribedDose"])
+                                            data_container["PrescribedDoses"][13]["PrescribedDose"]) # has to be changed later #
     dvh_panel.layout().addWidget(dvhs_plot)
 
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
@@ -286,7 +288,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(tumorous_structures_dvhs + oars_dvhs)
     dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
     dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
-                                                            data_container["PrescribedDoses"][13]["PrescribedDose"],
+                                                            data_container["PrescribedDoses"][13]["PrescribedDose"], # has to be changed!!!
                                                             data_container["AlgorithmsSettings"]["ReferenceIsodose"],
                                                             tumorous_structures_dvhs, oars_dvhs)
 

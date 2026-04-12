@@ -5,8 +5,8 @@ import os
 
 def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orientation):
     """
-    This function loads the DICOM RTDOSE file located in the "RTDOSE" subdirectory of patient's directory and applies the
-    DoseGridScaling factor in order to obtain the actual dose distribution. Furthermore, it extracts information
+    This function loads the DICOM RTDOSE file located in the "RTDOSE" subdirectory of patient's directory and applies
+    the DoseGridScaling factor in order to obtain the actual dose distribution. Furthermore, it extracts information
     regarding the dose grid parameters.
 
     Parameters
@@ -29,8 +29,6 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
         dose grid. The dictionary contains:
         - "DoseDistribution" : numpy.ndarray
             3D array of dose values.
-        - "MaximumDose" : float
-            Maximum dose value.
         - "DoseType" : str
             Type of dose (e.g., PHYSICAL).
         - "DoseUnits" : str
@@ -53,7 +51,8 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
     -----------
     - Dose is expressed in Gy units.
     - Dose refers to absorbed physical dose.
-    - The dose distribution corresponds to a completed treatment plan (DICOM attribute DoseSummationType is equal to "PLAN").
+    - The dose distribution corresponds to a completed treatment plan (DICOM attribute DoseSummationType is equal to
+      "PLAN").
 
     Limitations
     -----------
@@ -89,7 +88,6 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
     dose_distribution = np.array(dose_data.pixel_array * dose_data.DoseGridScaling, dtype = np.float64)
 
     dose = {"DoseDistribution" : dose_distribution,
-            "MaximumDose" : np.max(dose_distribution),
             "DoseType" : dose_data.DoseType,
             "DoseUnits" : dose_data.DoseUnits,
             "DoseGridPlanarDimensions" : [dose_data.Rows, dose_data.Columns],

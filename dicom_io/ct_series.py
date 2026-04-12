@@ -65,7 +65,8 @@ def load_ct_series(patient_dir_path):
 
         ct_slice_path = os.path.join(ct_series_dir, filename)
         ct_slice_data = pydicom.dcmread(ct_slice_path)
-        ct_slice = np.array((ct_slice_data.pixel_array * ct_slice_data.RescaleSlope) + ct_slice_data.RescaleIntercept, dtype = np.int16)
+        ct_slice = np.array((ct_slice_data.pixel_array * ct_slice_data.RescaleSlope) + ct_slice_data.RescaleIntercept,
+                            dtype = np.int16)
 
         # Some CT scanners use a padding technique to mark pixels that don't include valid image data. In such cases,
         # after the rescaling transformation, these pixels will correspond to extreme HU values. For the proper
@@ -89,7 +90,6 @@ def load_ct_series(patient_dir_path):
                                         "FrameOfReferenceUID" : ct_slice_data.FrameOfReferenceUID}
 
     # Check if SpacingBetweenSlices attribute is present.
-
     if "SpacingBetweenSlices" in ct_slice_data.dir():
 
         ct_series_acquisition_parameters["SpacingBetweenSlices"] = ct_slice_data.SpacingBetweenSlices
@@ -111,11 +111,10 @@ def load_ct_series(patient_dir_path):
             raise ValueError("CT series of non constant slice spacing is not supported.")
 
     # Check if the CT series consists of adjacent slices.
-
     if not np.allclose(ct_series_acquisition_parameters["SliceThickness"],
                        ct_series_acquisition_parameters["SpacingBetweenSlices"], rtol = 0, atol = 0.01):
 
-        raise ValueError("Non adjacent slices are not supported")
+        raise ValueError("Non adjacent slices are not supported.")
 
     # Check if the CT series spatial orientation corresponds to HFS patient positioning with zero gantry tilt.
     hfs_slice_orientation = [1, 0, 0, 0, 1, 0]

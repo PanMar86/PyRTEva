@@ -94,12 +94,12 @@ def generate_user_preferences_window(data_container):
             Prescribed dose widget.
         """
 
-        if (signal_text not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]) and widget.isEnabled():
+        if (signal_text != "Tumorous Structure") and widget.isEnabled():
 
             widget.setValue(0)
             widget.setDisabled(True)
 
-        elif (signal_text in ["Tumorous Structure", "Tumorous Structure (Optimization)"]) and (not widget.isEnabled()):
+        elif (signal_text == "Tumorous Structure") and (not widget.isEnabled()):
 
             widget.setDisabled(False)
 
@@ -194,14 +194,14 @@ def generate_user_preferences_window(data_container):
         structure_prescribed_dose.setRange(0,100)
         structure_prescribed_dose.setSingleStep(1)
 
-        if structure_type.currentText() not in ["Tumorous Structure", "Tumorous Structure (Optimization)"]:
+        if structure_type.currentText() != "Tumorous Structure":
 
             structure_prescribed_dose.setValue(0)
             structure_prescribed_dose.setDisabled(True)
 
         else:
 
-            # Set the first occurring prescribed dose value.
+            # Set the first occurring value.
             structure_prescribed_dose.setValue(data_container["PrescribedDoses"][0]["PrescribedDose"])
 
         # Change the state (if necessary) of the prescribed dose widget according to the user-selected structure type.
@@ -222,9 +222,12 @@ def generate_user_preferences_window(data_container):
     structures_info_scrollable_area.setWidget(structures_info_inner_container)
 
     if len(data_container["PrescribedDoses"]) > 1:
+
         additional_message = (f"They have also been detected {len(data_container["PrescribedDoses"])} structures "
                               f"with different prescribed doses associated with them. ")
+
     else:
+
         additional_message = ""
 
     structures_info_principal_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
@@ -237,7 +240,7 @@ def generate_user_preferences_window(data_container):
     structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
     structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
 
-    structures_info_secondary_message = QLabel("Include optimization structures in visualization panels:")
+    structures_info_secondary_message = QLabel("Include optimization structures in the standard visualization panels:")
 
     opt_structures_visualization = QCheckBox()
     opt_structures_visualization.setObjectName("opt_structures_visualization")
