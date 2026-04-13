@@ -5,7 +5,7 @@ from napari.utils import Colormap, colormaps
 
 
 def generate_visualisation(ct_series, ct_series_acquisition_parameters, structures_masks, dose_maps,
-                           prescribed_doses, visualization_mode, display_mode, optimization_structures_inclusion):
+                           prescribed_doses, visualization_mode, display_mode, additional_structures_inclusion):
     """
     This function generates and configures a multi-layer Napari viewer. The visualization and display modes dictate
     which types of layers (CT series, dose map, structure mask, advanced visualization layer) are present on the viewer.
@@ -38,8 +38,8 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
         - "2D" : Two-dimensional visualization.
         - "3D" : Three-dimensional visualization.
 
-    optimization_structures_inclusion : bool
-        Whether to include the optimization structures or not.
+    additional_structures_inclusion : bool
+        Whether to include the optimization structures and structures of type Other or not.
 
     Returns
     -------
@@ -55,7 +55,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
 
     # Switch between different visualization modes.
     if visualization_mode == "Standard":
-        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, optimization_structures_inclusion)
+        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, additional_structures_inclusion)
     elif visualization_mode == "Dose Homogeneity":
         viewer, scale = dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_doses, display_mode)
     elif visualization_mode == "Dose Gradient":
@@ -84,7 +84,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     return viewer
 
 
-def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, optimization_structures_inclusion):
+def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, additional_structures_inclusion):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
     CT series, the dose map and the structures masks.
@@ -105,8 +105,8 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
         - "2D" : Two-dimensional visualization.
         - "3D" : Three-dimensional visualization.
 
-    optimization_structures_inclusion : bool
-        Whether to include the optimization structures or not.
+    additional_structures_inclusion : bool
+        Whether to include the optimization structures and structures of type Other or not.
 
     Returns
     -------
@@ -127,9 +127,9 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
                  ct_series_acquisition_parameters["PixelSpacing"][1]]
 
     # Determine the structures that will be included in the standard visualization mode.
-    if optimization_structures_inclusion:
-        included_structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)"]
-    elif not optimization_structures_inclusion:
+    if additional_structures_inclusion:
+        included_structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)", "Other"]
+    elif not additional_structures_inclusion:
         included_structure_types = ["Tumorous Structure", "Organ At Risk"]
 
     # Create the various visualization layers.

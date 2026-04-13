@@ -8,7 +8,7 @@ reproducible test outcomes. All the values that are used during the assessments 
 
 import numpy as np
 import pytest
-from computations.dose_volume_histograms import generate_dose_volume_histograms
+from computations.dose_volume_histograms import generate_dose_volume_histogram
 from tests.mock_data import generate_mock_ct_series_acquisition_parameters, generate_mock_structures_masks, generate_mock_dose_map
 
 
@@ -29,7 +29,7 @@ def dose_maps():
 
 def test_generate_dose_volume_histograms(series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width = 10):
 
-    dvhs = generate_dose_volume_histograms(series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width)
+    dvhs = generate_dose_volume_histogram(series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width)
     oar_1_dvh = dvhs[0]
     oar_2_dvh = dvhs[1]
     tumorous_structure_dvh = dvhs[2]

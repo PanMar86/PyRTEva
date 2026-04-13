@@ -2,7 +2,7 @@ import numpy as np
 import re
 
 
-def generate_dose_volume_histograms(ct_series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width):
+def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width):
     """
     This function generates the differential and cumulative dose volume histogram (DVH) for each structure, excluding
     the external body contour. Cumulative DVHs are reported both as normalized percentages and absolute volumes (in cc).
@@ -54,8 +54,7 @@ def generate_dose_volume_histograms(ct_series_acquisition_parameters, structures
     for structure_mask in structures_masks:
 
         # Omit the structure corresponding to the body contour.
-        if re.search(r"[a-z]*[-_ ]*(external|ext|body|contour|patient)[-_ ]*[a-z]*",
-                     structure_mask["StructureName"].lower()) is None:
+        if structure_mask["StructureType"] != "External Body Contour":
 
             structure_volumetric_mask = structure_mask["VolumetricMask"]
             structure_voxels_dose = dose_maps["VolumetricDoseMap"][structure_volumetric_mask != 0]

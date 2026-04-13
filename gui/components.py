@@ -240,13 +240,13 @@ def generate_user_preferences_window(data_container):
     structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
     structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
 
-    structures_info_secondary_message = QLabel("Include optimization structures in the standard visualization panels:")
+    structures_info_secondary_message = QLabel("Include optimization structures and structures of type 'Other' in the standard visualization panels:")
 
-    opt_structures_visualization = QCheckBox()
-    opt_structures_visualization.setObjectName("opt_structures_visualization")
+    additional__structures_visualization = QCheckBox()
+    additional__structures_visualization.setObjectName("additional_structures_visualization")
 
     structures_info_mid_container_layout.addWidget(structures_info_secondary_message)
-    structures_info_mid_container_layout.addWidget(opt_structures_visualization)
+    structures_info_mid_container_layout.addWidget(additional__structures_visualization)
     structures_info_mid_container.setLayout(structures_info_mid_container_layout)
 
     structures_info_outer_container_layout.addWidget(structures_info_principal_message)
@@ -328,12 +328,62 @@ def generate_composite_panel(panel_name, label):
     temporary_content = QLabel(label)
     temporary_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-    composite_panel_layout = QVBoxLayout()
+    composite_panel_layout = QHBoxLayout()
     composite_panel_layout.setContentsMargins(5, 5, 5, 5)
     composite_panel_layout.addWidget(temporary_content)
     composite_panel.setLayout(composite_panel_layout)
 
     return composite_panel
+
+
+def generate_dvh_control_panel(data_container, dvhs_plot):
+
+    def change_state_dvh_graph(dvh):
+
+        if dvh.isVisible():
+            dvh.setVisible(False)
+        else:
+            dvh.setVisible(True)
+
+    dvh_control_panel = QGroupBox()
+    dvh_control_panel.setObjectName("dvh_control_panel")
+    dvh_control_panel_layout = QVBoxLayout()
+    dvh_control_panel_layout.setContentsMargins(0,30,0,40)
+
+    dvh_buttons_scrollable_area = QScrollArea()
+    dvh_buttons_scrollable_area.setObjectName("dvh_buttons_scrollable_area")
+    dvh_buttons_scrollable_area.setWidgetResizable(True)
+
+    dvh_buttons = QGroupBox()
+    dvh_buttons.setObjectName("dvh_buttons")
+    dvh_buttons_layout = QVBoxLayout()
+
+
+    for structure in data_container["Structures"]:
+
+        if structure["StructureType"] != "External Body Contour":
+
+            dvh_button = QPushButton(structure["StructureName"])
+            dvh_button.setObjectName(structure["StructureName"].lower())
+
+            # Find the associated figure and connect the button's click event.
+            dvh_figure = [dvh_figure for dvh_figure in dvhs_plot.getPlotItem().listDataItems() if dvh_figure.objectName() == dvh_button.objectName()][0]
+            dvh_button.clicked.connect(lambda signal, dvh_figure = dvh_figure : change_state_dvh_graph(dvh_figure))
+
+            dvh_buttons_layout.addWidget(dvh_button)
+
+    dvh_buttons.setLayout(dvh_buttons_layout)
+
+    dvh_buttons_scrollable_area.setWidget(dvh_buttons)
+
+    info_message = QLabel("Enable / Disable DVH")
+    info_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    dvh_control_panel_layout.addWidget(info_message)
+    dvh_control_panel_layout.addWidget(dvh_buttons_scrollable_area)
+    dvh_control_panel.setLayout(dvh_control_panel_layout)
+
+    return dvh_control_panel
 
 
 def generate_report_tables(report_tables_data):

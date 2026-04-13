@@ -1,10 +1,9 @@
 import napari
 import pickle
-from pprint import pprint
-from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
+from qtpy.QtWidgets import QApplication, QLabel, QPushButton, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
-from gui.components import generate_report_tables, generate_user_preferences_window
+from gui.components import generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel
 from dicom_io.ct_series import load_ct_series
 from dicom_io.structures import load_structures
 from dicom_io.dose import load_dose
@@ -12,9 +11,9 @@ from dicom_io.plan import load_plan
 from dicom_io.validators import validate_directory_structure
 from computations.structures_masks import generate_structures_masks
 from computations.dose_maps import generate_dose_maps
-from computations.dose_volume_histograms import generate_dose_volume_histograms
+from computations.dose_volume_histograms import generate_dose_volume_histogram
 from visualization.anatomy_dose import generate_visualisation
-from visualization.dose_volume_histograms import plot_dose_volume_histograms
+from visualization.dose_volume_histograms import generate_dose_volume_histogram_plots
 from plan_evaluation.structures_identification import identify_structures
 from plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_conformance, evaluate_dosimetric_indices
 
@@ -51,16 +50,16 @@ def load_patient_data(data_container, status_bar):
     update_status_bar(status_bar, "RT structures have been imported successfully.")
 
     update_status_bar(status_bar, "Computed dose is being imported...")
-    computed_dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
-                              data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
-    data_container["ComputedDose"] = computed_dose
+    dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
+                     data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
+    data_container["Dose"] = dose
     update_status_bar(status_bar, "Computed dose has been successfully imported.")
 
-    update_status_bar(status_bar, "Treatment plan is being imported. Please wait...")
+    update_status_bar(status_bar, "Treatment plan parameters are being imported. Please wait...")
     plan_parameters = load_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
     prescribed_doses = plan_parameters["PrescribedDoses"]
     data_container["PrescribedDoses"] = prescribed_doses
-    update_status_bar(status_bar, "Treatment plan has been imported successfully.")
+    update_status_bar(status_bar, "Treatment plan parameters have been imported successfully.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
 
@@ -92,8 +91,8 @@ def apply_user_preferences(data_container, status_bar):
     data_container["AlgorithmsSettings"]["DoseBinWidth"] = dose_bin_width
     reference_isodose = user_preferences_window.findChild(QDoubleSpinBox,"reference_isodose").value()
     data_container["AlgorithmsSettings"]["ReferenceIsodose"] = reference_isodose
-    opt_structures_visualization = user_preferences_window.findChild(QCheckBox,"opt_structures_visualization").isChecked()
-    data_container["OptimizationStructuresVisualization"] = opt_structures_visualization
+    additional_structures_visualization = user_preferences_window.findChild(QCheckBox,"additional_structures_visualization")
+    data_container["AdditionalStructuresVisualization"] = additional_structures_visualization.isChecked()
 
     # Store the user-approved structures' types and prescribed doses. Since the dictionaries related to prescribed doses
     # have now slightly different keys, reset the container-list.
@@ -151,12 +150,12 @@ def generate_intermediate_data(data_container, status_bar):
 
     update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
     dose_maps = generate_dose_maps(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
-                                   data_container["ComputedDose"], data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"])
+                                   data_container["Dose"], data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"])
     data_container["DoseMaps"] = dose_maps
     update_status_bar(status_bar, "Dose maps have been generated successfully.")
 
-    dose_volume_histograms = generate_dose_volume_histograms(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
-                                                             data_container["DoseMaps"], data_container["AlgorithmsSettings"]["DoseBinWidth"])
+    dose_volume_histograms = generate_dose_volume_histogram(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
+                                                            data_container["DoseMaps"], data_container["AlgorithmsSettings"]["DoseBinWidth"])
     data_container["DoseVolumeHistograms"] = dose_volume_histograms
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
@@ -202,7 +201,7 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
     viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
                                     data_container["Masks"], data_container["DoseMaps"],
                                     data_container["PrescribedDoses"], visualization_mode, display_mode,
-                                    data_container["OptimizationStructuresVisualization"])
+                                    data_container["AdditionalStructuresVisualization"])
 
     customize_viewer(viewer)
 
@@ -240,9 +239,11 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     temporary_content.hide()
     temporary_content.deleteLater()
 
-    dvhs_plot = plot_dose_volume_histograms(data_container["DoseVolumeHistograms"],
-                                            data_container["PrescribedDoses"][13]["PrescribedDose"]) # has to be changed later #
-    dvh_panel.layout().addWidget(dvhs_plot)
+    dvh_plots = generate_dose_volume_histogram_plots(data_container["DoseVolumeHistograms"])
+    dvh_control_panel = generate_dvh_control_panel(data_container, dvh_plots)
+
+    dvh_panel.layout().addWidget(dvh_plots)
+    dvh_panel.layout().addWidget(dvh_control_panel)
 
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
