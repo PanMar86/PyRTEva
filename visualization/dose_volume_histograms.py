@@ -26,9 +26,8 @@ def generate_dose_volume_histogram_plots(dose_volume_histograms):
     dvh_plots.setMouseEnabled(x = False, y = False)
 
     # Customize the figure's appearance.
-    dvh_plots.setStyleSheet("border: none")
     dvh_plots.showGrid(x = True, y = True, alpha = 0.25)
-    dvh_plots.getPlotItem().setTitle("<span style='font-size:12pt; font-weight:bold'>Dose Volume Histograms</span>")
+    dvh_plots.getPlotItem().setTitle("Dose Volume Histograms")
     x_axis = dvh_plots.getPlotItem().getAxis('bottom')
     x_axis.setLabel("Dose (Gy)")
     y_axis = dvh_plots.getPlotItem().getAxis('left')

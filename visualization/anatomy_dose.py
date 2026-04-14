@@ -24,8 +24,8 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     dose_maps : dict
         Dictionary containing the generated dose maps.
 
-    prescribed_doses : list
-        Prescribed dose values, expressed in Gy.
+    prescribed_doses : list of dict
+        List of dose prescription parameters for each structure.
 
     visualization_mode : str
         Visualization mode. Supported modes are:
@@ -157,9 +157,9 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
     CT series and the dose homogeneity maps of the tumorous structures. The dose homogeneity maps serve as a mean of
-    visualizing the deviations from the prescribed dose (which might be different for each tumorous structure).
-    The contrast window of each homogeneity map is centered with respect to the prescribed dose value, so that in
-    conjunction with a diverging colormap, the underdosed and overdosed regions inside the tumorous structures are
+    visualizing the deviations from the prescribed dose (which might be different for each tumorous structure). The
+    contrast window of each homogeneity map is centered with respect to the associated prescribed dose value, so that
+    in conjunction with a diverging colormap, the underdosed and overdosed regions inside the tumorous structures are
     clearly highlighted.
 
     Parameters

@@ -37,10 +37,6 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_g
                 Unique identifier of the corresponding slice.
         - "VolumetricDoseMap" : numpy.ndarray
             3D dose map, aligned to the CT series.
-
-    Limitations
-    -----------
-    - Only 2D planar interpolation is currently supported (corresponding to full or partial z-axis alignment).
     """
 
     # Determine the alignment type (if any).

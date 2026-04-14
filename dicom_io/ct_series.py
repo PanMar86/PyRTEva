@@ -43,12 +43,6 @@ def load_ct_series(patient_dir_path):
             Unique identifier of the patient's coordinate system.
         - "SpacingBetweenSlices" : float
             Spacing between adjacent slices, expressed in mm.
-
-    Limitations
-    -----------
-    - CT series spatial orientations that do not correspond to HFS patient positioning with zero gantry tilt, are not
-      supported.
-    - CT series consisting of slices that are not adjacent to each other is not supported.
     """
 
     ct_series_dir = os.path.join(patient_dir_path, "CT")
@@ -116,13 +110,11 @@ def load_ct_series(patient_dir_path):
 
         raise ValueError("Non adjacent slices are not supported.")
 
-    # Check if the CT series spatial orientation corresponds to HFS patient positioning with zero gantry tilt.
-    hfs_slice_orientation = [1, 0, 0, 0, 1, 0]
-
-    if not (np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], hfs_slice_orientation, rtol = 0, atol = 0.01) and
+    # Check ImageOrientationPatient and PatientPosition DICOM attributes values.
+    if not (np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], [1, 0, 0, 0, 1, 0], rtol = 0, atol = 0.01) and
             ct_series_acquisition_parameters["PatientPosition"] == "HFS"):
 
-        raise ValueError("Only the CT series spatial orientation that corresponds to HFS patient positioning\n"
-                         "with zero gantry tilt is supported.")
+        raise ValueError("Only CT series with ImageOrientationPatient DICOM attribute equal to [1, 0, 0, 0, 1, 0]\n"
+                         "and HFS patient positioning with zero gantry tilt are supported.")
 
     return ct_series, ct_series_acquisition_parameters

@@ -46,17 +46,6 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
         - "DoseGridPositionPatient" : list of float
             X, Y and Z coordinates of the upper-left pixel of the first dose grid plane, with respect to the patient's
             coordinate system, expressed in mm.
-
-    Assumptions
-    -----------
-    - Dose is expressed in Gy units.
-    - Dose refers to absorbed physical dose.
-    - The dose distribution corresponds to a completed treatment plan (DICOM attribute DoseSummationType is equal to
-      "PLAN").
-
-    Limitations
-    -----------
-    - Dose grids that don't have the same spatial orientation as the CT series are not supported.
     """
 
     dose_dir = os.path.join(patient_dir_path, "RTDOSE")
