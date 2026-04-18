@@ -1,6 +1,6 @@
 import re
 from copy import deepcopy
-from plan_evaluation.oars_mapping import oars_encountered_names
+from plan_evaluation.oars_lookup_table import oars_encountered_names
 
 
 def identify_structures(dose_volume_histograms, dose_constraints):
