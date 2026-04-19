@@ -1,13 +1,12 @@
 import numpy as np
-import re
 
 
-def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width):
+def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, dose_bin_width, additional_structures_inclusion):
     """
-    This function generates the differential and cumulative dose volume histogram (DVH) for each structure, excluding
-    the external body contour. Cumulative DVHs are reported both as normalized percentages and absolute volumes (in cc).
-    The cumulative DVHs follow the common radiotherapy convention of representing the percentage (or the absolute
-    volume) of a structure receiving at least a given dose.
+    This function generates the differential and cumulative dose volume histogram (DVH) for each structure. Cumulative
+    DVHs are reported both as normalized percentages and absolute volumes (in cc). The cumulative DVHs follow the common
+    radiotherapy convention of representing the percentage (or the absolute volume) of a structure receiving at least a
+    given dose.
 
     Parameters
     ----------
@@ -17,11 +16,14 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
     structures_masks : list of dict
         List of generated structures masks.
 
-    dose_maps : dict
-        Dictionary containing the generated dose maps.
+    volumetric_dose_map : dict
+        3D dose map, aligned to the CT series.
 
     dose_bin_width : float
         Width of the dose bins, expressed in Gy.
+
+    additional_structures_inclusion : bool
+        Whether to include the optimization structures and structures of type Other or not.
 
     Returns
     -------
@@ -29,6 +31,8 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
         List of generated DVHs. Each dictionary contains:
         - "StructureName" : str
             Name of the structure to which the DVHs correspond.
+        - "StructureType" : str
+            Type of the structure.
         - "VolumetricMask" : numpy.ndarray
             Volumetric mask of the structure.
         - "DifferentialDoseVolumeHistogram" : numpy.ndarray
@@ -49,15 +53,23 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
             Dose bin width, expressed in Gy.
     """
 
+    # Determine the structures that will be included in the generated dose volume histograms.
+    if additional_structures_inclusion:
+
+        included_structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)", "Other"]
+
+    elif not additional_structures_inclusion:
+
+        included_structure_types = ["Tumorous Structure", "Organ At Risk"]
+
     dose_volume_histograms = []
 
     for structure_mask in structures_masks:
 
-        # Omit the structure corresponding to the body contour.
-        if structure_mask["StructureType"] != "External Body Contour":
+        if structure_mask["StructureType"] in included_structure_types:
 
             structure_volumetric_mask = structure_mask["VolumetricMask"]
-            structure_voxels_dose = dose_maps["VolumetricDoseMap"][structure_volumetric_mask != 0]
+            structure_voxels_dose = volumetric_dose_map[structure_volumetric_mask != 0]
 
             # Pixel spacing and slice thickness are expressed in mm. Divide by 1000 to convert into cubic centimeters (cc).
             num_structure_voxels = structure_voxels_dose.shape[0]
@@ -79,6 +91,7 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
             absolute_volume_cumulative_dvh = structure_volume_cc * (normalized_cumulative_dvh / 100)
 
             dose_volume_histograms.append({"StructureName" : structure_mask["StructureName"],
+                                           "StructureType" : structure_mask["StructureType"],
                                            "VolumetricMask" : structure_volumetric_mask,
                                            "DifferentialDoseVolumeHistogram" : differential_dvh,
                                            "NormalizedCumulativeDoseVolumeHistogram" : normalized_cumulative_dvh,

@@ -57,12 +57,10 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_g
 
         # Match the slices of the CT series with the corresponding dose grid planes. In case of no associated dose grid
         # plane, a dose map corresponding to zero dose is applied.
-
         ct_slices_z_positions = np.array([ct_slice["ImagePositionPatient"][2] for ct_slice in ct_series])
 
         # Determine the type of the DoseGridFrameOffsetVector.
         # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
-
         if dose["DoseGridFrameOffsetVector"][0] == 0:
 
             dose_grid_planes_z_positions = (np.array(dose["DoseGridFrameOffsetVector"]) +
@@ -94,7 +92,6 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_g
 
             # The dose grid planes and the slices of the CT series are planarly aligned and z axis (partially or fully)
             # aligned. Interpolation is not required.
-
             for ct_slice_index in range(len(ct_series)):
 
                 if dose_grid_planes_indices[ct_slice_index] != -1:
@@ -213,7 +210,6 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, dose):
 
         # Determine the type of the DoseGridFrameOffsetVector
         # https://dicom.innolitics.com/ciods/rt-dose/rt-dose/3004000c
-
         if dose["DoseGridFrameOffsetVector"][0] == 0:
 
             dose_grid_planes_z_positions = np.array(dose["DoseGridFrameOffsetVector"]) + dose["DoseGridPositionPatient"][2]
@@ -223,7 +219,6 @@ def verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, dose):
             dose_grid_planes_z_positions = np.array(dose["DoseGridFrameOffsetVector"])
 
         # Check if at least one dose grid plane coincides with a slice of the CT series.
-
         for dose_grid_plane_z_position in dose_grid_planes_z_positions:
 
             if np.any(np.isclose(dose_grid_plane_z_position, ct_slices_z_positions, rtol=0, atol=0.01)):
@@ -243,7 +238,8 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
     Parameters
     ----------
     grid_frame_offset_vector : list of float
-        List-like object, containing the z-offsets of the dose grid planes relative to the first one, expressed in mm.
+        List, containing either the z-offsets of the dose grid planes relative to the first one, or the absolute z-positions
+        of the dose grid planes with respect to the patient's coordinate system, expressed in mm.
 
     ct_series_acquisition_parameters : dict
         Dictionary containing acquisition parameters.
@@ -263,7 +259,6 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
 
     # Provided that the spacing between the dose grid planes is constant, check if it is equal to the spacing between
     # the slices of the CT series.
-
     if constant_spacing:
 
         if np.allclose(np.abs(offsets_differences[0]), ct_series_acquisition_parameters["SpacingBetweenSlices"], rtol = 0, atol = 0.01):

@@ -11,7 +11,7 @@ def main():
     data_container = {"PatientsDirectory": "sample_data/dicom_data",
                       "AlgorithmsSettings": {"DoseGridInterpolationMethod": None, "DoseBinWidth": None, "ReferenceIsodose": None},
                       "CTSeries": None, "SeriesAcquisitionParameters": None, "Structures": None, "Dose" : None, "PrescribedDoses": None,
-                      "Masks": None, "DoseMaps": None, "DoseVolumeHistograms": None, "AdditionalStructuresVisualization": None}
+                      "Masks": None, "DoseMaps": None, "DoseVolumeHistograms": None, "AdditionalStructuresInclusion": None}
 
     app = QApplication()
     app_window = assemble_gui(data_container)

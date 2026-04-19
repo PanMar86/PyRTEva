@@ -45,6 +45,7 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
             continue
 
         else:
+
             structures_filename = filename
 
     structures_path = os.path.join(structures_dir, structures_filename)
@@ -91,7 +92,7 @@ def identify_structure_type(structure_name, structure_interpreted_type):
         Name of the structure.
 
     structure_interpreted_type : str
-        Interpreted type of the structure (e.g., GTV, CTV, PTV, ORGAN, CONTROL).
+        Interpreted type of the structure (e.g., GTV, CTV, PTV, ORGAN, CONTROL, etc.).
 
     Returns
     -------
@@ -101,9 +102,11 @@ def identify_structure_type(structure_name, structure_interpreted_type):
 
     # Detect the external body contour.
     if re.search(r"external|body|contour|patient", structure_name.lower()):
+
         if structure_interpreted_type.lower() == "external":
+
             structure_type = "External Body Contour"
-        # Unknown structure type.
+
         else:
             structure_type = "Other"
 
@@ -112,25 +115,34 @@ def identify_structure_type(structure_name, structure_interpreted_type):
           re.search(r"((ring[0-9a-z_ -]*(gtv|ctv|itv|ptv|boost))|((gtv|ctv|itv|ptv|boost)[0-9a-z_ -]*ring))", structure_name.lower())):
 
         if structure_interpreted_type.lower() == "control":
+
             structure_type = "Tumorous Structure (Optimization)"
+
         elif structure_interpreted_type.lower() in ["gtv", "ctv", "itv", "ptv"]:
+
             structure_type = "Tumorous Structure"
-        # Unknown structure type.
+
         else:
+
             structure_type = "Other"
 
     # Detect the organs at risk (OARs).
     elif re.search(r"^[a-z_ -]+(minus|-|exclude|excluding)?[a-z_ -]*(gtv|ctv|itv|ptv)?", structure_name.lower()):
+
         if structure_interpreted_type.lower() == "control":
+
             structure_type = "Organ At Risk (Optimization)"
+
         elif structure_interpreted_type.lower() == "organ":
+
             structure_type = "Organ At Risk"
-        # Unknown structure type.
+
         else:
+
             structure_type = "Other"
 
-    # Unknown structure type.
     else:
+
         structure_type = "Other"
 
     return structure_type

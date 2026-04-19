@@ -240,13 +240,13 @@ def generate_user_preferences_window(data_container):
     structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
     structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
 
-    structures_info_secondary_message = QLabel("Include optimization structures and structures of type 'Other' in the standard visualization panels:")
+    structures_info_secondary_message = QLabel("Include optimization structures and structures of type 'Other' in the standard visualization and DVH panels:")
 
-    additional__structures_visualization = QCheckBox()
-    additional__structures_visualization.setObjectName("additional_structures_visualization")
+    additional_structures_inclusion = QCheckBox()
+    additional_structures_inclusion.setObjectName("additional_structures_inclusion")
 
     structures_info_mid_container_layout.addWidget(structures_info_secondary_message)
-    structures_info_mid_container_layout.addWidget(additional__structures_visualization)
+    structures_info_mid_container_layout.addWidget(additional_structures_inclusion)
     structures_info_mid_container.setLayout(structures_info_mid_container_layout)
 
     structures_info_outer_container_layout.addWidget(structures_info_principal_message)
@@ -341,8 +341,11 @@ def generate_dvh_control_panel(data_container, dvhs_plot):
     def change_state_dvh_graph(dvh):
 
         if dvh.isVisible():
+
             dvh.setVisible(False)
+
         else:
+
             dvh.setVisible(True)
 
     dvh_control_panel = QGroupBox()
@@ -358,19 +361,16 @@ def generate_dvh_control_panel(data_container, dvhs_plot):
     dvh_buttons.setObjectName("dvh_buttons")
     dvh_buttons_layout = QVBoxLayout()
 
+    for dvh in data_container["DoseVolumeHistograms"]:
 
-    for structure in data_container["Structures"]:
+        dvh_button = QPushButton(dvh["StructureName"])
+        dvh_button.setObjectName(dvh["StructureName"].lower())
 
-        if structure["StructureType"] != "External Body Contour":
+        # Find the associated figure and connect the button's click event.
+        dvh_figure = [dvh_figure for dvh_figure in dvhs_plot.getPlotItem().listDataItems() if dvh_figure.objectName() == dvh_button.objectName()][0]
+        dvh_button.clicked.connect(lambda signal, dvh_figure = dvh_figure : change_state_dvh_graph(dvh_figure))
 
-            dvh_button = QPushButton(structure["StructureName"])
-            dvh_button.setObjectName(structure["StructureName"].lower())
-
-            # Find the associated figure and connect the button's click event.
-            dvh_figure = [dvh_figure for dvh_figure in dvhs_plot.getPlotItem().listDataItems() if dvh_figure.objectName() == dvh_button.objectName()][0]
-            dvh_button.clicked.connect(lambda signal, dvh_figure = dvh_figure : change_state_dvh_graph(dvh_figure))
-
-            dvh_buttons_layout.addWidget(dvh_button)
+        dvh_buttons_layout.addWidget(dvh_button)
 
     dvh_buttons.setLayout(dvh_buttons_layout)
 

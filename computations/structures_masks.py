@@ -52,8 +52,8 @@ def generate_structures_masks(ct_series, ct_series_acquisition_parameters, struc
             # Planar coordinates of the contour points.
             contour_points = contour["ContourPoints"][:, 0:2]
 
-            # Map the contour points to the corresponding slice. The following mapping is valid ONLY if the CT series
-            # spatial orientation corresponds to HFS patient positioning with zero gantry tilt.
+            # Map the contour points to the corresponding slice. The following mapping is valid ONLY if the CT Series
+            # ImageOrientationPatient and PatientPosition DICOM attributes are equal to [1, 0, 0, 0, 1, 0] and HFS respectively.
             contour_slice_coordinates = np.round(np.abs((np.array(slice_origin) - contour_points) /
                                                         np.array(np.flip(in_plane_spacing, axis = 0))), decimals = 0).astype(np.uint16)
             contour_slice_coordinates = np.flip(contour_slice_coordinates, axis = 1)

@@ -59,15 +59,13 @@ def load_ct_series(patient_dir_path):
 
         ct_slice_path = os.path.join(ct_series_dir, filename)
         ct_slice_data = pydicom.dcmread(ct_slice_path)
-        ct_slice = np.array((ct_slice_data.pixel_array * ct_slice_data.RescaleSlope) + ct_slice_data.RescaleIntercept,
-                            dtype = np.int16)
+        ct_slice = np.array((ct_slice_data.pixel_array * ct_slice_data.RescaleSlope) + ct_slice_data.RescaleIntercept, dtype = np.int16)
 
         # Some CT scanners use a padding technique to mark pixels that don't include valid image data. In such cases,
         # after the rescaling transformation, these pixels will correspond to extreme HU values. For the proper
         # visualization of patient's anatomy, clipping of HU values must be performed.
         ct_slice = np.clip(ct_slice, a_min = -1024, a_max = None)
-        ct_series.append({"Image" : ct_slice,
-                          "ImagePositionPatient" : ct_slice_data.ImagePositionPatient,
+        ct_series.append({"Image" : ct_slice, "ImagePositionPatient" : ct_slice_data.ImagePositionPatient,
                           "SOPInstanceUID" : ct_slice_data.SOPInstanceUID})
 
     # Sort the slices superior to inferior.
@@ -110,11 +108,11 @@ def load_ct_series(patient_dir_path):
 
         raise ValueError("Non adjacent slices are not supported.")
 
-    # Check ImageOrientationPatient and PatientPosition DICOM attributes values.
+    # Check ImageOrientationPatient and PatientPosition DICOM attribute values.
     if not (np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], [1, 0, 0, 0, 1, 0], rtol = 0, atol = 0.01) and
             ct_series_acquisition_parameters["PatientPosition"] == "HFS"):
 
         raise ValueError("Only CT series with ImageOrientationPatient DICOM attribute equal to [1, 0, 0, 0, 1, 0]\n"
-                         "and HFS patient positioning with zero gantry tilt are supported.")
+                         "and PatientPosition DICOM attribute equal to 'HFS' are supported.")
 
     return ct_series, ct_series_acquisition_parameters

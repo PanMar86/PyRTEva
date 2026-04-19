@@ -4,7 +4,7 @@ import napari
 from napari.utils import Colormap, colormaps
 
 
-def generate_visualisation(ct_series, ct_series_acquisition_parameters, structures_masks, dose_maps,
+def generate_visualisation(ct_series, ct_series_acquisition_parameters, structures_masks, volumetric_dose_map,
                            prescribed_doses, visualization_mode, display_mode, additional_structures_inclusion):
     """
     This function generates and configures a multi-layer Napari viewer. The visualization and display modes dictate
@@ -21,11 +21,11 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     structures_masks : list of dict
         List of generated structures masks.
 
-    dose_maps : dict
-        Dictionary containing the generated dose maps.
+    volumetric_dose_map : numpy.ndarray
+        3D dose map, aligned to the CT series.
 
     prescribed_doses : list of dict
-        List of dose prescription parameters for each structure.
+        List of dose prescription parameters for the provided structures.
 
     visualization_mode : str
         Visualization mode. Supported modes are:
@@ -50,21 +50,31 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     # Set up some custom colormaps before the viewer creation.
     custom_colormaps = generate_custom_colormaps()
     colormaps.AVAILABLE_COLORMAPS.clear()
+
     for custom_colormap in custom_colormaps:
+
         colormaps.AVAILABLE_COLORMAPS.update({custom_colormap.name : custom_colormap})
 
     # Switch between different visualization modes.
     if visualization_mode == "Standard":
-        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, additional_structures_inclusion)
+
+        viewer, scale = standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode, additional_structures_inclusion)
+
     elif visualization_mode == "Dose Homogeneity":
-        viewer, scale = dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_doses, display_mode)
+
+        viewer, scale = dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, prescribed_doses, display_mode)
+
     elif visualization_mode == "Dose Gradient":
-        viewer, scale = dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode)
+
+        viewer, scale = dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode)
 
     # Create the CT Series layer, which is common to all visualization modes.
     for structure_mask in structures_masks:
+
         if structure_mask["StructureType"] == "External Body Contour":
+
             ct_series = np.stack([slice["Image"] for slice in ct_series], axis=0)
+
             # After applying the body contour mask (in order to hide/remove structures outside the patient's anatomy),
             # regions outside patient's anatomy will have zero values, messing up with the proper visualisation of HUs.
             # Adding an offset value before the application of the mask immediately solves the problem.
@@ -73,9 +83,11 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
             offset = np.abs(minimum_hu_value)
             ct_series += offset
             ct_series = np.where(structure_mask["VolumetricMask"] != 0, ct_series, 0)
+
             # Revert back to original HU values.
             ct_series -= offset
             viewer.add_image(ct_series, name="CT Series", scale=scale, blending="additive", contrast_limits=[minimum_hu_value, maximum_hu_value])
+
             break
 
     # Re-order the CT Series layer.
@@ -84,7 +96,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
     return viewer
 
 
-def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode, additional_structures_inclusion):
+def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode, additional_structures_inclusion):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
     CT series, the dose map and the structures masks.
@@ -97,8 +109,8 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
     structures_masks : list of dict
         List of generated structures masks.
 
-    dose_maps : dict
-        Dictionary containing the generated dose maps.
+    volumetric_dose_map : numpy.ndarray
+        3D dose map, aligned to the CT series.
 
     display_mode : str
         Display mode. Supported modes are:
@@ -119,31 +131,44 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
     """
 
     if display_mode == "2D":
+
         viewer = napari.Viewer(ndisplay=2, show = False)
+
         scale = ct_series_acquisition_parameters["PixelSpacing"]
+
     elif display_mode == "3D":
+
         viewer = napari.Viewer(ndisplay=3, show = False)
+
         scale = [ct_series_acquisition_parameters["SliceThickness"], ct_series_acquisition_parameters["PixelSpacing"][0],
                  ct_series_acquisition_parameters["PixelSpacing"][1]]
 
     # Determine the structures that will be included in the standard visualization mode.
     if additional_structures_inclusion:
+
         included_structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk", "Organ At Risk (Optimization)", "Other"]
+
     elif not additional_structures_inclusion:
+
         included_structure_types = ["Tumorous Structure", "Organ At Risk"]
 
     # Create the various visualization layers.
     for structure_mask in structures_masks:
+
         if structure_mask["StructureType"] == "External Body Contour":
+
             # Create the dose map layer.
-            dose_map = np.where(structure_mask["VolumetricMask"] != 0, dose_maps["VolumetricDoseMap"], 0)
+            dose_map = np.where(structure_mask["VolumetricMask"] != 0, volumetric_dose_map, 0)
+
             # In some cases, the heavy skewness of the dose distribution in conjunction with the normalization step
             # and the automatic set-up of the contrast limits prior to the visualization, produces extreme color
             # saturation. Therefore, the contrast limits are set manually.
             maximum_dose = np.max(dose_map)
             viewer.add_image(dose_map, name = "Dose Map", scale = scale, opacity = 0.50,
                              blending = "additive", contrast_limits = [0, maximum_dose], colormap = "turbo")
+
         elif structure_mask["StructureType"] in included_structure_types:
+
             viewer.add_image(structure_mask["VolumetricMask"], name = structure_mask["StructureName"], scale = scale,
                              opacity = 0.30, blending = "additive", contrast_limits = [0, 1], visible = False)
 
@@ -153,7 +178,7 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
     return viewer, scale
 
 
-def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, prescribed_doses, display_mode):
+def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, prescribed_doses, display_mode):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
     CT series and the dose homogeneity maps of the tumorous structures. The dose homogeneity maps serve as a mean of
@@ -170,8 +195,8 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     structures_masks : list of dict
         List of generated structures masks.
 
-    dose_maps : dict
-        Dictionary containing the generated dose maps.
+    volumetric_dose_map : numpy.ndarray
+        3D dose map, aligned to the CT series.
 
     prescribed_doses : list of dict
         List of dose prescription parameters for each structure.
@@ -190,19 +215,27 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     """
 
     if display_mode == "2D":
+
         viewer = napari.Viewer(ndisplay = 2, show = False)
+
         scale = ct_series_acquisition_parameters["PixelSpacing"]
+
     elif display_mode == "3D":
+
         raise ValueError("3D Dose Homogeneity mode is not supported in the current version.")
 
     # Create the various visualization layers.
     for structure_mask in structures_masks:
+
         if structure_mask["StructureType"] == "Tumorous Structure":
+
             prescribed_dose = [prescribed_dose["PrescribedDose"] for prescribed_dose in prescribed_doses
                                if prescribed_dose["StructureName"] == structure_mask["StructureName"]][0]
-            dose_homogeneity_map = np.where(structure_mask["VolumetricMask"], dose_maps["VolumetricDoseMap"], 0)
+
+            dose_homogeneity_map = np.where(structure_mask["VolumetricMask"], volumetric_dose_map, 0)
             minimum_dose = np.min(dose_homogeneity_map[dose_homogeneity_map != 0])
             maximum_dose = np.max(dose_homogeneity_map)
+
             # https://matplotlib.org/stable/users/explain/colors/colormaps.html
             # It is highly recommended that a diverging colormap be used for the proper visualization of the
             # dose homogeneity map.
@@ -214,7 +247,7 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
     return viewer, scale
 
 
-def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, dose_maps, display_mode):
+def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
     CT series, the structures masks and the dose gradient maps of the planning target volumes (PTVs). The dose gradient
@@ -229,8 +262,8 @@ def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structure
     structures_masks : list of dict
         List of generated structures masks.
 
-    dose_maps : dict
-        Dictionary containing the generated dose maps.
+    volumetric_dose_map : numpy.ndarray
+        3D dose map, aligned to the CT series.
 
     display_mode : str
         Display mode. Supported modes are:
@@ -247,22 +280,32 @@ def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structure
     """
 
     if display_mode == "2D":
+
         viewer = napari.Viewer(ndisplay = 2, show = False)
+
         scale = ct_series_acquisition_parameters["PixelSpacing"]
+
     elif display_mode == "3D":
+
         raise ValueError("3D Dose Gradient mode is not supported in the current version.")
 
     for structure_mask in structures_masks:
+
         if structure_mask["StructureType"] == "External Body Contour":
+
             body_contour_mask = structure_mask["VolumetricMask"]
+
             break
 
     for structure_mask in structures_masks:
+
         # Identify all the structures masks associated with planning target volumes (ptvs).
         if (structure_mask["StructureType"] == "Tumorous Structure") and ("ptv" in structure_mask["StructureName"].lower()):
+
             # The following mask is used to exclude the ptv region from the patient's anatomy.
             gradient_shell_mask = structure_mask["VolumetricMask"] ^ body_contour_mask
-            dose_gradient = np.gradient(dose_maps["VolumetricDoseMap"], ct_series_acquisition_parameters["SpacingBetweenSlices"],
+
+            dose_gradient = np.gradient(volumetric_dose_map, ct_series_acquisition_parameters["SpacingBetweenSlices"],
                                         ct_series_acquisition_parameters["PixelSpacing"][0], ct_series_acquisition_parameters["PixelSpacing"][1])
             dose_gradient_magnitude = np.sqrt(np.power(dose_gradient[0],2) + np.power(dose_gradient[1],2) + np.power(dose_gradient[2],2))
             dose_gradient_map = np.where(gradient_shell_mask, dose_gradient_magnitude, 0)

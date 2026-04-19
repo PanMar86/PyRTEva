@@ -1,6 +1,6 @@
 import napari
 import pickle
-from qtpy.QtWidgets import QApplication, QLabel, QPushButton, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
+from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor
 from gui.components import generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel
@@ -14,7 +14,7 @@ from computations.dose_maps import generate_dose_maps
 from computations.dose_volume_histograms import generate_dose_volume_histogram
 from visualization.anatomy_dose import generate_visualisation
 from visualization.dose_volume_histograms import generate_dose_volume_histogram_plots
-from plan_evaluation.structures_identification import identify_structures
+from plan_evaluation.oars_identification import identify_oar_proper_names
 from plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_conformance, evaluate_dosimetric_indices
 
 
@@ -91,8 +91,8 @@ def apply_user_preferences(data_container, status_bar):
     data_container["AlgorithmsSettings"]["DoseBinWidth"] = dose_bin_width
     reference_isodose = user_preferences_window.findChild(QDoubleSpinBox,"reference_isodose").value()
     data_container["AlgorithmsSettings"]["ReferenceIsodose"] = reference_isodose
-    additional_structures_visualization = user_preferences_window.findChild(QCheckBox,"additional_structures_visualization")
-    data_container["AdditionalStructuresVisualization"] = additional_structures_visualization.isChecked()
+    additional_structures_inclusion = user_preferences_window.findChild(QCheckBox,"additional_structures_inclusion")
+    data_container["AdditionalStructuresInclusion"] = additional_structures_inclusion.isChecked()
 
     # Store the user-approved structures' types and prescribed doses. Since the dictionaries related to prescribed doses
     # have now slightly different keys, reset the container-list.
@@ -155,7 +155,9 @@ def generate_intermediate_data(data_container, status_bar):
     update_status_bar(status_bar, "Dose maps have been generated successfully.")
 
     dose_volume_histograms = generate_dose_volume_histogram(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
-                                                            data_container["DoseMaps"], data_container["AlgorithmsSettings"]["DoseBinWidth"])
+                                                            data_container["DoseMaps"]["VolumetricDoseMap"], data_container["AlgorithmsSettings"]["DoseBinWidth"],
+                                                            data_container["AdditionalStructuresInclusion"])
+
     data_container["DoseVolumeHistograms"] = dose_volume_histograms
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
@@ -199,9 +201,9 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
     temporary_content.deleteLater()
 
     viewer = generate_visualisation(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
-                                    data_container["Masks"], data_container["DoseMaps"],
+                                    data_container["Masks"], data_container["DoseMaps"]["VolumetricDoseMap"],
                                     data_container["PrescribedDoses"], visualization_mode, display_mode,
-                                    data_container["AdditionalStructuresVisualization"])
+                                    data_container["AdditionalStructuresInclusion"])
 
     customize_viewer(viewer)
 
@@ -281,20 +283,20 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constraints.pkl", mode="rb") as f:
         dose_constraints = pickle.load(f)
 
-    structures_dvhs = identify_structures(data_container["DoseVolumeHistograms"], dose_constraints)
-    tumorous_structures_dvhs = structures_dvhs["TumorousStructuresDoseVolumeHistograms"]
-    oars_dvhs = structures_dvhs["OARsDoseVolumeHistograms"]
-    oars_with_constraints_dvhs = structures_dvhs["OARsWithConstraintsDoseVolumeHistograms"]
+    # Map the oars' encountered names to standard names and identify any redundant structures.
+    identify_oar_proper_names(data_container["DoseVolumeHistograms"])
 
-    dosimetric_indices_evaluation = evaluate_dosimetric_indices(tumorous_structures_dvhs + oars_dvhs)
-    dose_constraints_evaluation = evaluate_dose_constraints(oars_with_constraints_dvhs, dose_constraints)
-    dose_conformance_evaluation = evaluate_dose_conformance(data_container["DoseMaps"],
-                                                            data_container["PrescribedDoses"][13]["PrescribedDose"], # has to be changed!!!
-                                                            data_container["AlgorithmsSettings"]["ReferenceIsodose"],
-                                                            tumorous_structures_dvhs, oars_dvhs)
+    dosimetric_indices_evaluation = evaluate_dosimetric_indices(data_container["DoseVolumeHistograms"])
+    dose_constraints_evaluation = evaluate_dose_constraints(data_container["DoseVolumeHistograms"], dose_constraints)
+    dose_conformance_evaluation = evaluate_dose_conformance(data_container["AlgorithmsSettings"]["ReferenceIsodose"],
+                                                            data_container["PrescribedDoses"],
+                                                            data_container["DoseMaps"]["VolumetricDoseMap"],
+                                                            data_container["DoseVolumeHistograms"])
 
-    report_tables_data = {"Dosimetric Indices" : dosimetric_indices_evaluation, "Dose Conformance" : dose_conformance_evaluation,
-                          "Dose Constraints" : dose_constraints, "Dose Constraints Evaluation" : dose_constraints_evaluation}
+    report_tables_data = {"Dosimetric Indices" : dosimetric_indices_evaluation,
+                          "Dose Conformance" : dose_conformance_evaluation,
+                          "Dose Constraints" : dose_constraints,
+                          "Dose Constraints Evaluation" : dose_constraints_evaluation}
 
     report_tables = generate_report_tables(report_tables_data)
 

@@ -44,6 +44,7 @@ def validate_directory_structure(patient_dir_path):
         for filename in sub_dir_filenames:
 
             if filename.lower().endswith(".dcm"):
+
                 num_dcm_files += 1
 
         if num_dcm_files == 0:
