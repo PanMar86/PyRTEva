@@ -32,7 +32,8 @@ def generate_user_preferences_window(data_container):
     """
     This function generates an auxiliary window that acts as a user interaction panel. The user is allowed to tweak
     various parameters such as the dose grid interpolation method, the dose bin width and the reference isodose. In
-    addition, is allowed to edit the pre-assigned type and prescribed dose value of each structure.
+    addition, is allowed to edit the pre-assigned type of the structures as well as the prescribed dose to the
+    structures for which the concept of prescribed dose is applicable.
 
     Parameters
     ----------
@@ -109,6 +110,7 @@ def generate_user_preferences_window(data_container):
 
 
     window = QDialog()
+    window.setWindowTitle("User Preferences")
     window.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
     window.setFixedSize(QSize(915, 700))
     window_layout = QVBoxLayout()
@@ -422,9 +424,10 @@ def generate_report_tables(report_tables_data):
         tab_layout.setContentsMargins(10, 10, 10, 10)
 
         table = QTableWidget()
-        table.setObjectName(table_name)
+        table.setObjectName(table_name.lower())
         table.setRowCount(table_data.shape[0])
         table.setColumnCount(table_data.shape[1])
+        table.setHorizontalHeaderLabels(table_data.columns.tolist())
 
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table.verticalHeader().setDefaultSectionSize(35)

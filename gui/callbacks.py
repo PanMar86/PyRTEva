@@ -47,11 +47,11 @@ def load_patient_data(data_container, status_bar):
     data_container["Structures"] = structures
     update_status_bar(status_bar, "RT structures have been imported successfully.")
 
-    update_status_bar(status_bar, "Computed dose is being imported...")
+    update_status_bar(status_bar, "Dose is being imported...")
     dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
                      data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
     data_container["Dose"] = dose
-    update_status_bar(status_bar, "Computed dose has been successfully imported.")
+    update_status_bar(status_bar, "Dose has been successfully imported.")
 
     update_status_bar(status_bar, "Treatment plan parameters are being imported. Please wait...")
     plan_parameters = load_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
@@ -66,9 +66,8 @@ def load_patient_data(data_container, status_bar):
 
 def apply_user_preferences(data_container, status_bar):
     """
-
-
-
+    This function stores and applies the user preferences such as algorithms settings, structures' types and prescribed
+    doses (to the structures for which the concept of prescribed dose is applicable).
 
     Parameters
     ----------
@@ -167,7 +166,7 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
     This function triggers the execution of the function that generates and configures a multi-layer Napari viewer. The
     visualization and display modes dictate what type of layers are present on the viewer. The existing blank Napari
     viewer (acting as a placeholder) is removed from the container panel and deleted, prior to the creation of the new
-    instance. The viewer is further customized via the "customize_viewer" function.
+    instance.
 
     Parameters
     ----------
@@ -189,7 +188,7 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
 
     update_status_bar(status_bar, f"{display_mode} {visualization_mode} visualisation mode is being initialized. Please wait...")
 
-    temporary_content  = [child for child in visualisation_panel.children() if isinstance(child, napari._qt.qt_main_window._QtMainWindow)][0]
+    temporary_content = visualisation_panel.findChild(napari._qt.qt_main_window._QtMainWindow)
     visualisation_panel.layout().removeWidget(temporary_content)
     temporary_content.hide()
     temporary_content.deleteLater()
@@ -229,7 +228,7 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
 
     update_status_bar(status_bar, "Dose volume histograms are being generated. Please wait...")
 
-    temporary_content = [child for child in dvh_panel.children() if isinstance(child, QLabel)][0]
+    temporary_content= dvh_panel.findChild(QLabel)
     dvh_panel.layout().removeWidget(temporary_content)
     temporary_content.hide()
     temporary_content.deleteLater()
@@ -247,10 +246,8 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
 
 def display_evaluation_report(data_container, status_bar, evaluation_panel):
     """
-    This function triggers the execution of the functions that split the generated dose volume histograms (DVHs) into
-    three groups (corresponding to tumorous structures, OARs and OARs with at least one corresponding dose constraint
-    respectively), and evaluate the treatment plan based on a group of dosimetric indices, the dose conformance (with
-    respect to the tumorous structures) and the compliance with the associated dose constraints. The existing QLabel
+    This function triggers the execution of the functions that evaluate the treatment plan based on a group of
+    dosimetric and dose conformance indices, and the compliance with the associated dose constraints. The existing QLabel
     (acting as a generic placeholder) is removed from the container panel and deleted, prior to the creation of the
     evaluation report tables. Finally, the gui status bar is updated to reflect the progress status.
 
@@ -268,7 +265,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
 
     update_status_bar(status_bar, "Plan evaluation report is being generated. Please wait...")
 
-    temporary_content = [child for child in evaluation_panel.children() if isinstance(child, QLabel)][0]
+    temporary_content = evaluation_panel.findChild(QLabel)
     evaluation_panel.layout().removeWidget(temporary_content)
     temporary_content.hide()
     temporary_content.deleteLater()
@@ -276,7 +273,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constraints.pkl", mode="rb") as f:
         dose_constraints = pickle.load(f)
 
-    # Map the oars' encountered names to standard names and identify any redundant structures.
+    # Map the oars' encountered names to standard names.
     identify_oar_proper_names(data_container["DoseVolumeHistograms"])
 
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(data_container["DoseVolumeHistograms"])
@@ -296,8 +293,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     # Insert plan evaluation results to the corresponding tables.
     for table_name, table_data in report_tables_data.items():
 
-        table = report_tables.findChildren(QTableWidget, table_name)[0]
-        table.setHorizontalHeaderLabels(table_data.columns.tolist())
+        table = report_tables.findChild(QTableWidget, table_name.lower())
 
         for row_index in range(table_data.shape[0]):
 
@@ -310,11 +306,11 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
 
                 if "Pass" in table_item_value:
 
-                    table_item.setForeground(QBrush(QColor("green")))
+                    table_item.setForeground(QColor("green"))
 
                 elif "Fail" in table_item_value:
 
-                    table_item.setForeground(QBrush(QColor("red")))
+                    table_item.setForeground(QColor("red"))
 
                 table.setItem(row_index, col_index, table_item)
 
@@ -347,9 +343,9 @@ def update_status_bar(status_bar, message):
 
 def customize_viewer(viewer):
     """
-    This function modifies the given Napari viewer to create a minimal, dark-themed version suitable for
-    gui-embedding. A series of control buttons are "deactivated" (hided) on purpose, so that there is no
-    signal mixing due to the existence of two napari viewers, embedded on the gui.
+    This function modifies the given Napari viewer to create a minimal version, suitable for gui-embedding. A series of
+    control buttons are "deactivated" (hided) on purpose, so that there is no signal mixing due to the existence of two
+    napari viewers, embedded on the gui.
 
     Parameters
     ----------
