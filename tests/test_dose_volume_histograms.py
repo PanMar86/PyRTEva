@@ -29,7 +29,7 @@ def dose_maps():
 
 def test_generate_dose_volume_histograms(series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width = 10):
 
-    dvhs = generate_dose_volume_histogram(series_acquisition_parameters, structures_masks, dose_maps, dose_bin_width)
+    dvhs = generate_dose_volume_histogram(series_acquisition_parameters, structures_masks, dose_maps["VolumetricDoseMap"], dose_bin_width, False)
     oar_1_dvh = dvhs[0]
     oar_2_dvh = dvhs[1]
     tumorous_structure_dvh = dvhs[2]

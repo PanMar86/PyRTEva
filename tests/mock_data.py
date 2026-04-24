@@ -19,6 +19,7 @@ def generate_mock_ct_series_acquisition_parameters():
                                         "SliceThickness" : 3.00,
                                         "SpacingBetweenSlices": None,
                                         "ImageOrientationPatient" : None,
+                                        "PatientPosition": None,
                                         "FrameOfReferenceUID" : None}
 
     return ct_series_acquisition_parameters
@@ -47,11 +48,17 @@ def generate_mock_structures_masks():
     tumorous_structure_volumetric_mask = np.zeros((10, 10, 10), dtype=np.uint8)
     tumorous_structure_volumetric_mask[:,5:9,1:9] = 1
 
-    structures_masks = [{"StructureName" : "OAR_1", "PlanarMasksOnReferencedImages" : None,
+    structures_masks = [{"StructureName" : "OAR_1",
+                         "StructureType" : "Organ At Risk",
+                         "PlanarMasksOnReferencedImages" : None,
                          "VolumetricMask" : oar_1_volumetric_mask},
-                        {"StructureName" : "OAR_2", "PlanarMasksOnReferencedImages" : None,
+                        {"StructureName" : "OAR_2",
+                         "StructureType": "Organ At Risk",
+                         "PlanarMasksOnReferencedImages" : None,
                          "VolumetricMask" : oar_2_volumetric_mask},
-                        {"StructureName" : "TumorousStructure", "PlanarMasksOnReferencedImages" : None,
+                        {"StructureName" : "TumorousStructure",
+                         "StructureType": "Tumorous Structure",
+                         "PlanarMasksOnReferencedImages" : None,
                          "VolumetricMask" : tumorous_structure_volumetric_mask}]
 
     return structures_masks
@@ -116,6 +123,7 @@ def generate_mock_dvh():
     absolute_volume_cumulative_dvh = (normalized_cumulative_dvh/100) * structure_volume
 
     dvh = {"StructureName" : structure_name,
+           "StructureType" : "Organ At Risk",
            "VolumetricMask" : None,
            "DifferentialDoseVolumeHistogram" : differential_dvh,
            "NormalizedCumulativeDoseVolumeHistogram" : normalized_cumulative_dvh,

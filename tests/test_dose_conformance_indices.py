@@ -35,42 +35,42 @@ def test_compute_homogeneity_index(prescribed_dose, dvh, homogeneity_index):
 
 @pytest.mark.parametrize("reference_isodose, conformity_index", [(0.50, 0.450), (0.80, 0.281), (0.95, 0.169)])
 def test_compute_conformity_index(structures_masks, dose_map, reference_isodose, conformity_index):
-    tumorous_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                                          if structure_mask["StructureName"] == "TumorousStructure"][0]
-    assert compute_conformity_index(dose_map["VolumetricDoseMap"], dose_map["PrescribedDose"], reference_isodose,
-                                    tumorous_structure_volumetric_mask) == conformity_index
+    ptv_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
+                                     if structure_mask["StructureName"] == "TumorousStructure"][0]
+    assert compute_conformity_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
+                                    ptv_structure_volumetric_mask) == conformity_index
     return None
 
 
 @pytest.mark.parametrize("reference_isodose, healthy_tissue_conformity_index", [(0.50, 0.500), (0.80, 0.500), (0.95, 0.500)])
 def test_compute_healthy_tissue_conformity_index(structures_masks, dose_map, reference_isodose, healthy_tissue_conformity_index):
-    tumorous_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                                          if structure_mask["StructureName"] == "TumorousStructure"][0]
-    assert compute_healthy_tissue_conformity_index(dose_map["VolumetricDoseMap"], dose_map["PrescribedDose"],
-                                                   reference_isodose, tumorous_structure_volumetric_mask) == healthy_tissue_conformity_index
+    ptv_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
+                                     if structure_mask["StructureName"] == "TumorousStructure"][0]
+    assert compute_healthy_tissue_conformity_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
+                                                   ptv_structure_volumetric_mask) == healthy_tissue_conformity_index
     return None
 
 
 @pytest.mark.parametrize("reference_isodose, conformation_number", [(0.50, 0.225), (0.80, 0.141), (0.95, 0.084)])
 def test_compute_conformation_number(structures_masks, dose_map, reference_isodose, conformation_number):
-    tumorous_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                                          if structure_mask["StructureName"] == "TumorousStructure"][0]
-    assert compute_conformation_number(dose_map["VolumetricDoseMap"], dose_map["PrescribedDose"], reference_isodose,
-                                       tumorous_structure_volumetric_mask) == conformation_number
+    ptv_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
+                                     if structure_mask["StructureName"] == "TumorousStructure"][0]
+    assert compute_conformation_number(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
+                                       ptv_structure_volumetric_mask) == conformation_number
     return None
 
 
 @pytest.mark.parametrize("reference_isodose, conformal_index", [(0.50, 0.058), (0.80, 0.068), (0.95, 0.057)])
 def test_compute_conformal_index(structures_masks, dose_map, reference_isodose, conformal_index):
-    tumorous_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                                          if structure_mask["StructureName"] == "TumorousStructure"][0]
+    ptv_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
+                                     if structure_mask["StructureName"] == "TumorousStructure"][0]
     oars_volumetric_masks = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
                              if not (structure_mask["StructureName"] == "TumorousStructure")]
-    assert compute_conformal_index(dose_map["VolumetricDoseMap"], dose_map["PrescribedDose"], reference_isodose,
-                                   tumorous_structure_volumetric_mask, oars_volumetric_masks) == conformal_index
+    assert compute_conformal_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
+                                   ptv_structure_volumetric_mask, oars_volumetric_masks) == conformal_index
     return None
 
 
 def test_gradient_index(dose_map):
-    assert compute_gradient_index(dose_map["VolumetricDoseMap"], dose_map["PrescribedDose"]) == 2.667
+    assert compute_gradient_index(dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"]) == 2.667
     return None
