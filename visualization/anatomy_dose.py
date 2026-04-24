@@ -8,7 +8,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
                            prescribed_doses, visualization_mode, display_mode, additional_structures_inclusion):
     """
     This function generates and configures a multi-layer Napari viewer. The visualization and display modes dictate
-    which types of layers (CT series, dose map, structure mask, advanced visualization layer) are present on the viewer.
+    which types of layers are present on the viewer.
 
     Parameters
     ----------
@@ -99,7 +99,7 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
 def standard_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode, additional_structures_inclusion):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
-    CT series, the dose map and the structures masks.
+    CT series, the dose map and the various structures.
 
     Parameters
     ----------
@@ -181,10 +181,10 @@ def standard_visualisation_mode(ct_series_acquisition_parameters, structures_mas
 def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, prescribed_doses, display_mode):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
-    CT series and the dose homogeneity maps of the tumorous structures. The dose homogeneity maps serve as a mean of
+    CT series and the dose homogeneity maps of the tumorous structures. Each dose homogeneity map serves as a mean of
     visualizing the deviations from the prescribed dose (which might be different for each tumorous structure). The
     contrast window of each homogeneity map is centered with respect to the associated prescribed dose value, so that
-    in conjunction with a diverging colormap, the underdosed and overdosed regions inside the tumorous structures are
+    in conjunction with a diverging colormap, the underdosed and overdosed regions inside the tumorous structure are
     clearly highlighted.
 
     Parameters
@@ -250,9 +250,9 @@ def dose_homogeneity_visualisation_mode(ct_series_acquisition_parameters, struct
 def dose_gradient_visualisation_mode(ct_series_acquisition_parameters, structures_masks, volumetric_dose_map, display_mode):
     """
     This function creates and configures a multi-layer napari viewer. The viewer contains layers associated with the
-    CT series, the structures masks and the dose gradient maps of the planning target volumes (PTVs). The dose gradient
-    maps serve as a mean of visualizing the magnitude of the dose gradient in the region between the PTVs and the patient's
-    external surface.
+    CT series, the dose gradient maps of the planning target volume (ptv) structures and the various ptv structures.
+    Each dose gradient map serves as a mean of visualizing the magnitude of the dose gradient in the region between the
+    ptv structure and the patient's external surface.
 
     Parameters
     ----------

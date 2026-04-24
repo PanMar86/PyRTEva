@@ -37,12 +37,12 @@ def load_ct_series(patient_dir_path):
             In-plane pixel spacing, expressed in mm.
         - "SliceThickness" : float
             Nominal slice thickness, expressed in mm.
+        - "SpacingBetweenSlices" : float
+            Spacing between adjacent slices, expressed in mm.
         - "ImageOrientationPatient" : list of float
             CT series spatial orientation, with respect to the patient's coordinate system.
         - "FrameOfReferenceUID" : str
             Unique identifier of the patient's coordinate system.
-        - "SpacingBetweenSlices" : float
-            Spacing between adjacent slices, expressed in mm.
     """
 
     ct_series_dir = os.path.join(patient_dir_path, "CT")
@@ -81,7 +81,7 @@ def load_ct_series(patient_dir_path):
                                         "PatientPosition" : ct_slice_data.PatientPosition,
                                         "FrameOfReferenceUID" : ct_slice_data.FrameOfReferenceUID}
 
-    # Check if SpacingBetweenSlices attribute is present.
+    # Check if SpacingBetweenSlices DICOM attribute is present.
     if "SpacingBetweenSlices" in ct_slice_data.dir():
 
         ct_series_acquisition_parameters["SpacingBetweenSlices"] = ct_slice_data.SpacingBetweenSlices

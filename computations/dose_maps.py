@@ -238,7 +238,7 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
     Parameters
     ----------
     grid_frame_offset_vector : list of float
-        List, containing either the z-offsets of the dose grid planes relative to the first one, or the absolute z-positions
+        List containing either the z-offsets of the dose grid planes relative to the first one, or the absolute z-positions
         of the dose grid planes with respect to the patient's coordinate system, expressed in mm.
 
     ct_series_acquisition_parameters : dict

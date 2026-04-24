@@ -42,7 +42,7 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
         - "DoseGridFrameOffsetVector" : list of float
             Offsets along the z-axis for each dose grid plane.
         - "DoseGridOrientationPatient" : list of float
-            Spatial Orientation of the dose grid, with respect to the patient's coordinate system.
+            Spatial orientation of the dose grid, with respect to the patient's coordinate system.
         - "DoseGridPositionPatient" : list of float
             X, Y and Z coordinates of the upper-left pixel of the first dose grid plane, with respect to the patient's
             coordinate system, expressed in mm.
@@ -72,7 +72,7 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
     if not np.allclose(dose_data.ImageOrientationPatient, ct_series_orientation, rtol = 0, atol = 0.01):
 
         raise ValueError("There was an orientation mismatch. Dose grids that have different spatial orientation than\n"
-                         "the CT series are not supported.")
+                         "the CT series (with respect to the patient's coordinate system) are not supported.")
 
     dose_distribution = np.array(dose_data.pixel_array * dose_data.DoseGridScaling, dtype = np.float64)
 

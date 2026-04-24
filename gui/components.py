@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt, QSize
 
 def generate_main_window():
     """
-    This function generates the gui main window (custom styling is applied via a qss file).
+    This function generates the gui main window.
 
     Returns
     -------
@@ -17,10 +17,10 @@ def generate_main_window():
 
     main_window = QWidget()
     main_window.setObjectName("main_window")
-    main_window.setWindowTitle("PyRTEva, an experimental radiation therapy plan evaluator, based οn Python")
-    make_window_layout = QGridLayout()
-    make_window_layout.setContentsMargins(5, 5, 5, 5)
-    main_window.setLayout(make_window_layout)
+    main_window.setWindowTitle("PyRTEva, an experimental radiation therapy plan evaluation toolkit, based οn Python")
+    main_window_layout = QGridLayout()
+    main_window_layout.setContentsMargins(5, 5, 5, 5)
+    main_window.setLayout(main_window_layout)
 
     with open("gui/custom_styles/main_window.qss", mode="r") as main_window_qss:
         main_window.setStyleSheet(main_window_qss.read())
@@ -30,12 +30,14 @@ def generate_main_window():
 
 def generate_user_preferences_window(data_container):
     """
-    This function generates an auxiliary window that acts as a user interaction panel (custom styling is applied via a qss file).
+    This function generates an auxiliary window that acts as a user interaction panel. The user is allowed to tweak
+    various parameters such as the dose grid interpolation method, the dose bin width and the reference isodose. In
+    addition, is allowed to edit the pre-assigned type and prescribed dose value of each structure.
 
     Parameters
     ----------
     data_container : dict
-    	Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     Returns
     -------
@@ -50,10 +52,10 @@ def generate_user_preferences_window(data_container):
         Parameters
         ----------
         container_widget : qtpy.QtWidgets.QWidget
-        	Container of the combo-boxes corresponding to the type of the structures.
+        	Container of the QComboBox widgets corresponding to the type of the structures.
 
         parent_widget : qtpy.QtWidgets.QDialog
-            Parent widget of the pop-up message-boxes.
+            Parent widget of the QMessageBox widgets.
         """
 
         num_body_contours = 0
@@ -82,8 +84,8 @@ def generate_user_preferences_window(data_container):
 
     def change_state_prescribed_dose_widget(signal_text, widget):
         """
-        This function activates / deactivates (if necessary) the widget associated with the prescribed dose, each time the user
-        assigns a different structure type than the one having already been assigned.
+        This function activates / deactivates (if necessary) the widget associated with the prescribed dose, each time
+        the user assigns a different structure type than the one having already been assigned.
 
         Parameters
         ----------
@@ -107,8 +109,6 @@ def generate_user_preferences_window(data_container):
 
 
     window = QDialog()
-    window.setObjectName("window")
-    window.setWindowTitle("User Preferences")
     window.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
     window.setFixedSize(QSize(915, 700))
     window_layout = QVBoxLayout()
@@ -118,7 +118,7 @@ def generate_user_preferences_window(data_container):
         window.setStyleSheet(user_preferences_window_qss.read())
 
     alg_settings_outer_container = QGroupBox("Algorithms settings")
-    alg_settings_outer_container.setObjectName("alg_setting_outer_container")
+    alg_settings_outer_container.setObjectName("alg_settings_outer_container")
     alg_settings_outer_container_layout = QVBoxLayout()
     alg_settings_outer_container_layout.setContentsMargins(10,25,10,10)
 
@@ -166,12 +166,25 @@ def generate_user_preferences_window(data_container):
     structures_info_outer_container_layout = QVBoxLayout()
     structures_info_outer_container_layout.setContentsMargins(10,25,10,20)
 
+    structures_info_mid_container = QWidget()
+    structures_info_mid_container_layout = QHBoxLayout()
+    structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
+
+    structures_info_secondary_message = QLabel("Include optimization structures and structures of type 'Other' in the standard visualization and DVH panels:")
+
+    additional_structures_inclusion = QCheckBox()
+    additional_structures_inclusion.setObjectName("additional_structures_inclusion")
+
+    structures_info_mid_container_layout.addWidget(structures_info_secondary_message)
+    structures_info_mid_container_layout.addWidget(additional_structures_inclusion)
+    structures_info_mid_container.setLayout(structures_info_mid_container_layout)
+
     structures_info_scrollable_area = QScrollArea()
     structures_info_scrollable_area.setObjectName("structures_info_scrollable_area")
     structures_info_scrollable_area.setWidgetResizable(True)
 
     structures_info_inner_container = QWidget()
-    structures_info_inner_container.setObjectName("structures_info_inner_container")
     structures_info_inner_container_layout = QVBoxLayout()
 
     structure_types = ["Tumorous Structure", "Tumorous Structure (Optimization)", "Organ At Risk",
@@ -201,7 +214,7 @@ def generate_user_preferences_window(data_container):
 
         else:
 
-            # Set the first occurring value.
+            # Set the first occurring value in case of multiple prescribed doses (different targets).
             structure_prescribed_dose.setValue(data_container["PrescribedDoses"][0]["PrescribedDose"])
 
         # Change the state (if necessary) of the prescribed dose widget according to the user-selected structure type.
@@ -223,7 +236,7 @@ def generate_user_preferences_window(data_container):
 
     if len(data_container["PrescribedDoses"]) > 1:
 
-        additional_message = (f"They have also been detected {len(data_container["PrescribedDoses"])} structures "
+        additional_message = (f"They have also been detected {len(data_container["PrescribedDoses"])} structures, possibly "
                               f"with different prescribed doses associated with them. ")
 
     else:
@@ -231,23 +244,9 @@ def generate_user_preferences_window(data_container):
         additional_message = ""
 
     structures_info_principal_message = QLabel(f"They have been detected {len(data_container["Structures"])} structures in total. {additional_message}"
-                                     f"Please verify that the pre-assigned structure types, as well as the prescribed doses "
-                                     f"(to the structures for which prescribed doses are applicable) are correct.")
+                                               f"Please verify that the pre-assigned structure types, as well as the prescribed doses "
+                                               f"(to the structures for which prescribed doses are applicable) are correct.")
     structures_info_principal_message.setWordWrap(True)
-
-    structures_info_mid_container = QWidget()
-    structures_info_mid_container_layout = QHBoxLayout()
-    structures_info_mid_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    structures_info_mid_container_layout.setContentsMargins(0, 0, 0, 0)
-
-    structures_info_secondary_message = QLabel("Include optimization structures and structures of type 'Other' in the standard visualization and DVH panels:")
-
-    additional_structures_inclusion = QCheckBox()
-    additional_structures_inclusion.setObjectName("additional_structures_inclusion")
-
-    structures_info_mid_container_layout.addWidget(structures_info_secondary_message)
-    structures_info_mid_container_layout.addWidget(additional_structures_inclusion)
-    structures_info_mid_container.setLayout(structures_info_mid_container_layout)
 
     structures_info_outer_container_layout.addWidget(structures_info_principal_message)
     structures_info_outer_container_layout.addWidget(structures_info_mid_container)
@@ -266,53 +265,39 @@ def generate_user_preferences_window(data_container):
     return window
 
 
-def generate_viewer_panel(panel_name):
+def generate_viewer_panel():
     """
-    This function generates a panel that acts as a container for a Napari viewer. It sets up a QWidget with a vertical
-    box layout (although the widget container is expected to hold only one element) and embeds a blank viewer.The viewer
-    is further customized via the "customize_viewer" function. Later on, the blank viewer is replaced by a viewer containing
-    all the relevant image layers.
-
-    Parameters
-    ----------
-    panel_name : str
-    	Name of the panel.
+    This function generates a panel that acts as a container for a napari viewer, and embeds a blank viewer. Later on,
+    the blank viewer is replaced by a viewer containing all the relevant image layers.
 
     Returns
     -------
     viewer_panel : qtpy.QtWidgets.QWidget
-        Panel containing a Napari viewer.
+        Panel containing a blank napari viewer.
     """
 
     viewer_panel = QWidget()
-    viewer_panel.setObjectName(panel_name)
+    viewer_panel_layout = QVBoxLayout()
+    viewer_panel_layout.setContentsMargins(2, 2, 2, 2)
 
     viewer = napari.Viewer(show=False)
     customize_viewer(viewer)
 
     viewer_qt_widget = viewer.window._qt_window
 
-    viewer_panel_layout = QVBoxLayout()
-    viewer_panel_layout.setContentsMargins(2, 2, 2, 2)
     viewer_panel_layout.addWidget(viewer_qt_widget)
     viewer_panel.setLayout(viewer_panel_layout)
 
     return viewer_panel
 
 
-def generate_composite_panel(panel_name, label):
+def generate_composite_panel(label):
     """
-    This function generates a panel that acts as a generic container. It sets up a QWidget with a vertical box layout
-    (although the widget container is expected to hold only one element), embeds a QLabel widget, and applies custom
-    styling. Later on, the QLabel is replaced by the actual panel content (a pyqtgraph.PlotWidget corresponding to a
-    dose volume histograms plot or a QTabWidget with tabs that correspond to a group of tables representing the plan
-    evaluation results).
+    This function generates a panel that acts as a generic container, and embeds a QLabel widget. Later on, the QLabel is
+    replaced by the actual panel content.
 
     Parameters
     ----------
-    panel_name : str
-        Name of the panel.
-
     label : str
         Descriptive text appearing on the panel (prior to the appearance of the actual content).
 
@@ -323,13 +308,12 @@ def generate_composite_panel(panel_name, label):
     """
 
     composite_panel = QWidget()
-    composite_panel.setObjectName(panel_name)
+    composite_panel_layout = QHBoxLayout()
+    composite_panel_layout.setContentsMargins(5, 5, 5, 5)
 
     temporary_content = QLabel(label)
     temporary_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-    composite_panel_layout = QHBoxLayout()
-    composite_panel_layout.setContentsMargins(5, 5, 5, 5)
     composite_panel_layout.addWidget(temporary_content)
     composite_panel.setLayout(composite_panel_layout)
 
@@ -337,21 +321,45 @@ def generate_composite_panel(panel_name, label):
 
 
 def generate_dvh_control_panel(data_container, dvhs_plot):
+    """
+    This function generates a panel that acts as a container for the buttons used to change the visibility of each
+    dose volume histogram figure.
 
-    def change_state_dvh_graph(dvh):
+    Parameters
+    ----------
+    data_container : dict
+        Dictionary acting as a (shared) data container used by the callback functions.
+    dvhs_plot : pyqtgraph.widgets.PlotWidget.PlotWidget
+        Object containing the rendered dose volume histogram figures.
 
-        if dvh.isVisible():
+    Returns
+    -------
+    dvh_control_panel : QWidget.QGroupBox
+        Dose volume histograms control panel.
+    """
 
-            dvh.setVisible(False)
+    def change_visibility_dvh_figure(dvh_figure):
+        """
+        This function changes the visibility of each dose volume histogram figure.
+
+        Parameters
+        ----------
+        dvh_figure : pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem
+            Object containing the rendered dose volume histogram figure.
+        """
+
+        if dvh_figure.isVisible():
+
+            dvh_figure.setVisible(False)
 
         else:
 
-            dvh.setVisible(True)
+            dvh_figure.setVisible(True)
 
     dvh_control_panel = QGroupBox()
     dvh_control_panel.setObjectName("dvh_control_panel")
     dvh_control_panel_layout = QVBoxLayout()
-    dvh_control_panel_layout.setContentsMargins(0,30,0,40)
+    dvh_control_panel_layout.setContentsMargins(0, 30, 0, 40)
 
     dvh_buttons_scrollable_area = QScrollArea()
     dvh_buttons_scrollable_area.setObjectName("dvh_buttons_scrollable_area")
@@ -360,6 +368,9 @@ def generate_dvh_control_panel(data_container, dvhs_plot):
     dvh_buttons = QGroupBox()
     dvh_buttons.setObjectName("dvh_buttons")
     dvh_buttons_layout = QVBoxLayout()
+    dvh_buttons_layout.setSpacing(10)
+    dvh_buttons_layout.setContentsMargins(20, 20, 10, 20)
+    dvh_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     for dvh in data_container["DoseVolumeHistograms"]:
 
@@ -368,7 +379,7 @@ def generate_dvh_control_panel(data_container, dvhs_plot):
 
         # Find the associated figure and connect the button's click event.
         dvh_figure = [dvh_figure for dvh_figure in dvhs_plot.getPlotItem().listDataItems() if dvh_figure.objectName() == dvh_button.objectName()][0]
-        dvh_button.clicked.connect(lambda signal, dvh_figure = dvh_figure : change_state_dvh_graph(dvh_figure))
+        dvh_button.clicked.connect(lambda signal, dvh_figure = dvh_figure : change_visibility_dvh_figure(dvh_figure))
 
         dvh_buttons_layout.addWidget(dvh_button)
 
@@ -388,10 +399,8 @@ def generate_dvh_control_panel(data_container, dvhs_plot):
 
 def generate_report_tables(report_tables_data):
     """
-    This function generates a group of tables so that the plan evaluation results can be displayed. It sets up a
-    QTabWidget (with each tab being a QWidget, container of a TableWidget that corresponds to a different table), and
-    applies custom styling. Table cells are created but not populated with values; the function only defines the table
-    structure and layout.
+    This function generates a group of tables so that the plan evaluation results can be displayed. Table cells are
+    created but not populated with values; the function only defines the table structure and layout.
 
     Parameters
     ----------
@@ -401,7 +410,7 @@ def generate_report_tables(report_tables_data):
     Returns
     -------
     report_tables : qtpy.QtWidgets.QTabWidget
-        Group of tables displaying the plan evaluation results.
+        Group of (empty) tables.
     """
 
     report_tables = QTabWidget()
@@ -409,26 +418,21 @@ def generate_report_tables(report_tables_data):
     for table_name, table_data in report_tables_data.items():
 
         tab = QWidget()
+        tab_layout = QVBoxLayout()
+        tab_layout.setContentsMargins(10, 10, 10, 10)
+
         table = QTableWidget()
         table.setObjectName(table_name)
         table.setRowCount(table_data.shape[0])
         table.setColumnCount(table_data.shape[1])
 
-        # Set headers' alignment.
-        table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.verticalHeader().setDefaultSectionSize(35)
         table.verticalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Adjust column width and row height.
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        table.horizontalHeader().setFixedHeight(35)
-        table.verticalHeader().setDefaultSectionSize(35)
-
-        # Disable editing
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setShowGrid(True)
 
-        tab_layout = QVBoxLayout()
-        tab_layout.setContentsMargins(10, 10, 10, 10)
         tab_layout.addWidget(table)
         tab.setLayout(tab_layout)
 
@@ -437,94 +441,61 @@ def generate_report_tables(report_tables_data):
     return report_tables
 
 
-def generate_status_bar_panel(panel_name):
+def generate_status_bar_panel():
     """
-    This function generates a panel that acts as a container for a status bar. It sets up a QWidget with a vertical box
-    layout (although the widget container is expected to hold only one element), embeds a QStatusBar widget, and applies
-    custom styling.
-
-    Parameters
-    ----------
-    panel_name : str
-        Name of the panel.
+    This function generates a panel that acts as a container for a status bar.
 
     Returns
     -------
     status_bar_panel : qtpy.QtWidgets.QWidget
         Panel containing a status bar.
 
-    status_bar : qtpy.QStatusBar
+    status_bar : qtpy.QtWidgets.QStatusBar
         Status bar contained within the panel, used to display progress messages to the user.
     """
 
     status_bar_panel = QWidget()
-    status_bar_panel.setObjectName(panel_name)
-
-    status_bar = QStatusBar()
-    status_bar.showMessage("Ready")
-    status_bar.setStyleSheet("font-size: 15px; color: #E8E8F0; border: none")
-
+    status_bar_panel.setObjectName("status_bar_panel")
     status_bar_panel_layout = QVBoxLayout()
     status_bar_panel_layout.setContentsMargins(5, 5, 5, 5)
+
+    status_bar = QStatusBar()
+    status_bar.setObjectName("status_bar")
+    status_bar.showMessage("Ready")
+
     status_bar_panel_layout.addWidget(status_bar)
     status_bar_panel.setLayout(status_bar_panel_layout)
 
     return status_bar_panel, status_bar
 
 
-def generate_button(label):
+def generate_menu_button(label, menu_items_labels):
     """
-    This function generates a clickable button (used to trigger the execution of specific callback functions) and applies
-    custom styling. It sets up a QPushButton widget, and applies custom styling.
-
-    Parameters
-    ----------
-    label : str
-         Descriptive text appearing on the button.
-
-    Returns
-    -------
-    button : qtpy.QtWidgets.QPushButton
-       Clickable button.
-    """
-
-    button = QPushButton(label)
-    button.setFixedWidth(200)
-    button.setFixedHeight(30)
-
-    return button
-
-
-def generate_menu_button(label, menu_item_labels):
-    """
-    This function generates a dropdown menu, used to group clickable buttons of similar functionality. It sets up a
-    QMenu and a QToolButton widget (that expands when clicked to show the available QAction objects), and applies custom
-    styling.
+    This function generates a button corresponding to a dropdown menu, which is used to group buttons (QAction widgets)
+    of similar functionality.
 
     Parameters
     ----------
     label : str
         Descriptive text appearing on the button.
 
-    menu_item_labels : list of str
-        List containing strings that act as descriptive text appearing on the QAction objects.
+    menu_items_labels : list of str
+        List containing strings that act as descriptive text appearing on the QAction widgets.
 
     Returns
     -------
     button : qtpy.QtWidgets.QToolButton
-        Clickable button corresponding to a dropdown menu.
+        Button corresponding to a dropdown menu.
     """
 
     button = QToolButton()
     button.setText(label)
-    button.setFixedWidth(200)
-    button.setFixedHeight(30)
     button.setPopupMode(QToolButton.InstantPopup)
 
     menu = QMenu(button)
-    menu.setFixedWidth(200)
 
-    for item_label in menu_item_labels:
+    for item_label in menu_items_labels:
+
         menu.addAction(item_label)
 
     button.setMenu(menu)
@@ -532,18 +503,13 @@ def generate_menu_button(label, menu_item_labels):
     return button
 
 
-def generate_buttonbar(button_bar_name, buttons):
+def generate_buttonbar(buttons):
     """
-    This function generates a button bar that acts as a container for the gui buttons. It sets up a QWidget with a
-    horizontal box layout, embeds the QPushbutton and QToolButton widgets that correspond to the gui buttons, and applies
-    custom styling.
+    This function generates a button bar that acts as a container for the gui buttons.
 
     Parameters
     ----------
-    button_bar_name : str
-        Name of the button bar.
-
-    buttons : list of QPushButton/QToolButton
+    buttons : list of QPushButton/QToolButton widgets.
         List containing the gui buttons to be added to the button bar.
 
     Returns
@@ -553,15 +519,14 @@ def generate_buttonbar(button_bar_name, buttons):
     """
 
     buttonbar = QWidget()
-    buttonbar.setObjectName(button_bar_name)
+    buttonbar.setObjectName("buttonBar")
     buttonbar_layout = QHBoxLayout()
     buttonbar_layout.setContentsMargins(5, 5, 5, 5)
     buttonbar_layout.setSpacing(5)
+    buttonbar_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
     for button in buttons:
         buttonbar_layout.addWidget(button)
-
-    buttonbar_layout.addStretch()
 
     buttonbar.setLayout(buttonbar_layout)
 
@@ -570,22 +535,21 @@ def generate_buttonbar(button_bar_name, buttons):
 
 def customize_viewer(viewer):
     """
-    This function modifies the given (blank) Napari viewer to create a minimal, dark-themed version suitable for
-    gui-embedding. A series of control buttons are "deactivated" (hided) on purpose, so that there is no signal matching
-    due to the existence of two napari viewers, embedded on the gui.
+    This function modifies a (blank) napari viewer to create a minimal version, suitable for gui-embedding. A series of
+    control buttons are "deactivated" (hided) on purpose, so that there is no signal mixing due to the existence of two
+    napari viewers, embedded on the gui.
 
     Parameters
     ----------
     viewer : napari.viewer.Viewer
-        Napari viewer whose interface elements will be modified.
+        Napari viewer.
     """
 
+    viewer.window._qt_window._qt_viewer.setStyleSheet("background-color: black")
+    viewer.window._qt_window._qt_viewer.viewerButtons.setVisible(False)
+    viewer.window._qt_window._qt_viewer.layerButtons.setVisible(False)
+    viewer.window._qt_window._qt_viewer._welcome_widget.setVisible(False)
     viewer.window._qt_window.menuBar().setVisible(False)
     viewer.window._qt_window.statusBar().setVisible(False)
-
-    viewer.window._qt_viewer.setStyleSheet("background-color: black")
-    viewer.window._qt_viewer.viewerButtons.setVisible(False)
-    viewer.window._qt_viewer.layerButtons.setVisible(False)
-    viewer.window._qt_viewer._welcome_widget.setVisible(False)
 
     return None

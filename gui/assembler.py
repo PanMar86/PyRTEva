@@ -1,7 +1,8 @@
 from gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel, generate_status_bar_panel,
-                            generate_button, generate_menu_button, generate_buttonbar)
+                            generate_menu_button, generate_buttonbar)
 from gui.callbacks import (load_patient_data, apply_user_preferences, generate_intermediate_data, display_visualisation,
                            display_dose_volume_histograms, display_evaluation_report)
+from qtpy.QtWidgets import QPushButton
 
 
 def assemble_gui(data_container):
@@ -20,25 +21,22 @@ def assemble_gui(data_container):
         The assembled gui main window.
     """
 
-    # Create the main window.
     main_window = generate_main_window()
 
-    # Create the main panels.
-    standard_visualisation_panel = generate_viewer_panel("StandardViewerPanel")
-    advanced_visualisation_panel = generate_viewer_panel("AdvancedViewerPanel")
-    dvh_panel = generate_composite_panel("DVHPanel", "DVH Display Panel")
-    plan_evaluation_panel = generate_composite_panel("PlanEvaluationPanel","Plan Evaluation Panel")
-    status_bar_panel, status_bar = generate_status_bar_panel("StatusBarPanel")
+    standard_visualisation_panel = generate_viewer_panel()
+    advanced_visualisation_panel = generate_viewer_panel()
+    dvh_panel = generate_composite_panel("DVH Panel")
+    plan_evaluation_panel = generate_composite_panel("Plan Evaluation Panel")
+    status_bar_panel, status_bar = generate_status_bar_panel()
 
-    # Create the top button bar and the associated buttons.
     buttons = []
 
-    load_data_button = generate_button("Load patient data")
+    load_data_button = QPushButton("Load patient data")
     load_data_button.clicked.connect(lambda: load_patient_data(data_container, status_bar))
     load_data_button.clicked.connect(lambda: apply_user_preferences(data_container, status_bar))
     buttons.append(load_data_button)
 
-    process_data_button = generate_button("Process patient data")
+    process_data_button = QPushButton("Process patient data")
     process_data_button.clicked.connect(lambda: generate_intermediate_data(data_container, status_bar))
     buttons.append(process_data_button)
 
@@ -58,15 +56,15 @@ def assemble_gui(data_container):
                                                                                          "Dose Gradient", "2D"))
     buttons.append(adv_visualisations_button)
 
-    dvh_button = generate_button("Display DVHs")
+    dvh_button = QPushButton("Display DVHs")
     dvh_button.clicked.connect(lambda: display_dose_volume_histograms(data_container, status_bar, dvh_panel))
     buttons.append(dvh_button)
 
-    plan_evaluation_button = generate_button("Evaluate plan")
+    plan_evaluation_button = QPushButton("Evaluate plan")
     plan_evaluation_button.clicked.connect(lambda: display_evaluation_report(data_container, status_bar, plan_evaluation_panel))
     buttons.append(plan_evaluation_button)
 
-    buttonbar = generate_buttonbar("ButtonBar", buttons)
+    buttonbar = generate_buttonbar(buttons)
 
     # Add the gui components to the main window.
     main_window.layout().addWidget(buttonbar, 0, 0, 1, 2)

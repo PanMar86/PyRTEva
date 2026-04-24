@@ -21,13 +21,11 @@ from plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_
 def load_patient_data(data_container, status_bar):
     """
     This function triggers the execution of the functions that load and validate all the patient-related DICOM data.
-    It uses a dictionary, acting as a (shared) data container, to store the corresponding data. Finally, the gui status
-    bar is updated to reflect the current loading stage.
 
     Parameters
     ----------
     data_container : dict
-        Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     status_bar : qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -68,14 +66,14 @@ def load_patient_data(data_container, status_bar):
 
 def apply_user_preferences(data_container, status_bar):
     """
-    This function triggers an auxiliary window that acts as a user interaction panel. It uses a dictionary, acting as
-    a (shared) data container, to store the corresponding, user preferences data. Finally, the gui status bar is updated
-    to reflect the current, user preferences application stage.
+
+
+
 
     Parameters
     ----------
     data_container : dict
-        Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     status_bar : qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -128,14 +126,12 @@ def apply_user_preferences(data_container, status_bar):
 def generate_intermediate_data(data_container, status_bar):
     """
     This function triggers the execution of the functions that generate all the necessary (intermediate) data required
-    both for visualization and plan assessment. They use the loaded, patient-related DICOM data to generate structure
-    masks, dose maps and dose volume histograms for all associated structures. Finally, the gui status bar is updated
-    to reflect the current data generation stage.
+    both for visualization and plan assessment.
 
     Parameters
     ----------
     data_container : dict
-        Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     status_bar :qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -169,16 +165,14 @@ def generate_intermediate_data(data_container, status_bar):
 def display_visualisation(data_container, status_bar, visualisation_panel, visualization_mode, display_mode):
     """
     This function triggers the execution of the function that generates and configures a multi-layer Napari viewer. The
-    visualization and display modes dictate what type of layers (CT series, volumetric dose map, volumetric structure
-    mask, advanced visualization layer) are present on the viewer. The existing blank Napari viewer (acting as a
-    placeholder) is removed from the container panel and deleted, prior to the creation of the new instance. The viewer
-    is further customized via the "customize_viewer" function. Finally, the gui status bar is updated to reflect the
-    progress status.
+    visualization and display modes dictate what type of layers are present on the viewer. The existing blank Napari
+    viewer (acting as a placeholder) is removed from the container panel and deleted, prior to the creation of the new
+    instance. The viewer is further customized via the "customize_viewer" function.
 
     Parameters
     ----------
     data_container : dict
-        Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     status_bar : qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -218,14 +212,13 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
 def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     """
     This function triggers the execution of the function that plots the generated dose volume histograms for all
-    associated structures. The existing QLabel (acting as a generic placeholder) is removed from the container panel and
-    deleted, prior to the creation of the dose volume histograms plot. Finally, the gui status bar is updated to reflect
-    the progress status.
+    associated structures. The existing QLabel (acting as a generic placeholder) is removed from the container panel
+    and deleted, prior to the creation of the dose volume histograms plot.
 
     Parameters
     ----------
     data_container : dict
-        Shared data container.
+        Dictionary acting as a (shared) data container used by the callback functions.
 
     status_bar : qtpy.QtWidgets.QStatusBar
         Status bar.
@@ -356,22 +349,22 @@ def customize_viewer(viewer):
     """
     This function modifies the given Napari viewer to create a minimal, dark-themed version suitable for
     gui-embedding. A series of control buttons are "deactivated" (hided) on purpose, so that there is no
-    signal matching due to the existence of two napari viewers, embedded on the gui.
+    signal mixing due to the existence of two napari viewers, embedded on the gui.
 
     Parameters
     ----------
     viewer : napari.viewer.Viewer
         Napari viewer whose interface elements will be modified.
     """
-
-    viewer.window._qt_window._qt_viewer.setStyleSheet("background-color:black; border: none")
+    viewer.window._qt_window._qt_viewer.setStyleSheet("background-color: black")
+    viewer.window._qt_window._qt_viewer.viewerButtons.setVisible(False)
+    viewer.window._qt_window._qt_viewer.layerButtons.setVisible(False)
     viewer.window._qt_window.menuBar().setVisible(False)
-    viewer.window._qt_viewer.viewerButtons.setVisible(False)
-    viewer.window._qt_viewer.layerButtons.setVisible(False)
+    viewer.window._qt_window.statusBar()._activity_item.setVisible(False)
 
     layers = viewer.layers
     for layer in layers:
-        for widget in viewer.window._qt_viewer.controls.widgets[layer].children():
+        for widget in viewer.window._qt_window._qt_viewer.controls.widgets[layer].children():
             if type(widget) is napari._qt.widgets.qt_mode_buttons.QtModeRadioButton:
                 widget.setVisible(False)
 
