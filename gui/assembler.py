@@ -33,10 +33,10 @@ def assemble_gui(data_container):
 
     load_data_button = QPushButton("Load patient data")
     load_data_button.clicked.connect(lambda: load_patient_data(data_container, status_bar))
-    load_data_button.clicked.connect(lambda: apply_user_preferences(data_container, status_bar))
     buttons.append(load_data_button)
 
     process_data_button = QPushButton("Process patient data")
+    process_data_button.clicked.connect(lambda: apply_user_preferences(data_container, status_bar))
     process_data_button.clicked.connect(lambda: generate_intermediate_data(data_container, status_bar))
     buttons.append(process_data_button)
 
