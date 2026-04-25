@@ -4,7 +4,7 @@ from plan_evaluation.dose_constraints_evaluators import (evaluate_maximum_dose_c
                                                          evaluate_dose_abs_volume_constraints)
 from plan_evaluation.dose_conformance_indices import (compute_homogeneity_index, compute_conformity_index,
                                                       compute_healthy_tissue_conformity_index, compute_conformation_number,
-                                                      compute_conformal_index, compute_gradient_index)
+                                                      compute_gradient_index)
 from plan_evaluation.dosimetric_indices import (compute_maximum_dose, compute_minimum_dose, compute_mean_dose, compute_Dv)
 
 
@@ -139,8 +139,6 @@ def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_do
             Healthy tissue conformity index.
         - "Conformation Number" : float
             Conformation Number.
-        - "Conformal Index" : float
-            Conformal Index.
         - "Gradient Index" : float
             Gradient Index.
     """
@@ -154,7 +152,7 @@ def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_do
 
     num_of_rows = len(ptv_structures_dvhs)
     columns = ["Structure", "Homogeneity Index", "Conformity Index", "HT Conformity Index",
-               "Conformation Number", "Conformal Index", "Gradient Index"]
+               "Conformation Number", "Gradient Index"]
     evaluation_table = pd.DataFrame("", index=range(num_of_rows), columns=columns)
 
     for row_index in range(num_of_rows):
@@ -179,10 +177,6 @@ def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_do
         evaluation_table.loc[row_index, "Conformation Number"] = compute_conformation_number(reference_isodose, prescribed_dose,
                                                                                              volumetric_dose_map,
                                                                                              ptv_structures_dvhs[row_index]["VolumetricMask"])
-
-        evaluation_table.loc[row_index, "Conformal Index"] = compute_conformal_index(reference_isodose, prescribed_dose,
-                                                                                     volumetric_dose_map, ptv_structures_dvhs[row_index]["VolumetricMask"],
-                                                                                     oars_volumetric_masks)
 
         evaluation_table.loc[row_index, "Gradient Index"] = compute_gradient_index(prescribed_dose, volumetric_dose_map)
 

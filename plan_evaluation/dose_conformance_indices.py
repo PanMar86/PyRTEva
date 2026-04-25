@@ -147,58 +147,6 @@ def compute_conformation_number(reference_isodose, prescribed_dose, volumetric_d
     return conformation_number
 
 
-def compute_conformal_index(reference_isodose, prescribed_dose, volumetric_dose_map,
-                            ptv_structure_volumetric_mask, oars_volumetric_masks):
-    """
-    This function computes the conformal index (COIN), which is defined as the product of the conformation number and a
-    number that acts as a penalty factor, based on the fractions of OARs' volumes enclosed by the reference isodose
-    (Baltas, D., Kolotas, C., Geramani, K., Mould, R. F., Ioannidis, G., Kekchidi, M., & Zamboglou, N. (1998). A conformal
-    index (COIN) to evaluate implant quality and dose specification in brachytherapy. International journal of radiation
-    oncology, biology, physics, 40(2), 515-524).
-
-    Parameters
-    ----------
-    reference_isodose : float
-        Reference isodose level expressed as a fraction of the prescribed dose.
-
-    prescribed_dose : float
-        Prescribed dose, expressed in Gy.
-
-    volumetric_dose_map : numpy.ndarray
-        3D dose map, aligned to the CT series.
-
-    ptv_structure_volumetric_mask : numpy.ndarray
-        3D binary mask of the structure across all corresponding slices.
-
-    oars_volumetric_masks : list of numpy.ndarray
-        List of 3D binary masks of the structures, across all corresponding slices.
-
-    Returns
-    -------
-    conformal_index : float
-        Conformal index, rounded to three decimal places.
-    """
-
-    reference_isodose_volumetric_mask = np.where(volumetric_dose_map >= reference_isodose * prescribed_dose, 1, 0)
-    volume_enclosed_by_reference_isodose = np.sum(reference_isodose_volumetric_mask)
-    tumorous_structure_volume = np.sum(ptv_structure_volumetric_mask)
-    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum((ptv_structure_volumetric_mask &
-                                                                      reference_isodose_volumetric_mask))
-
-    coin_factor = 1
-
-    for oar_volumetric_mask in oars_volumetric_masks:
-
-        oar_volume_enclosed_by_reference_isodose = np.sum((oar_volumetric_mask & reference_isodose_volumetric_mask))
-        oar_volume = np.sum(oar_volumetric_mask)
-        coin_factor *= 1 - (oar_volume_enclosed_by_reference_isodose / oar_volume)
-
-    conformal_index = np.round((coin_factor * (np.power(tumorous_structure_volume_enclosed_by_reference_isodose, 2) /
-                                              (tumorous_structure_volume * volume_enclosed_by_reference_isodose))), 3)
-
-    return conformal_index
-
-
 def compute_gradient_index(prescribed_dose, volumetric_dose_map):
     """
     This function computes the gradient index, which is defined as the ratio between the volume enclosed by the 50% isodose
