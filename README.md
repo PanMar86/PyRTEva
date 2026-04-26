@@ -11,6 +11,7 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 ## Features
 
 - DICOM RT support. 
+- Hybrid rt structures identification (based on regex and user verification).
 - Interactive 2D and 3D visualization including advanced options such as dose homogeneity and dose gradient mode.
 - DVH computation with support for common dose metrics (Dmax, Dmean, Dx, Vx).
 - Computation of standard plan evaluation metrics, including dose conformity index and dose homogeneity index.
@@ -60,15 +61,13 @@ python main.py
 
 - While the toolkit supports core DICOM RT objects (CT, RTSTRUCT, RTDOSE, RTPLAN), it does not yet handle all vendor-specific edge cases, private tags, or uncommon acquisition geometries.
 
-- Dose maps computation relies on the assumption of a rectangular dose grid that has the same orientation as the patient’s coordinate system. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Non-rectangular grids, rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
+- Dose maps computation relies on the assumption of a dose grid that has the same orientation as the CT series. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
 
 - 2D Standard visualization mode supports only axial view. Sagittal and coronal views are not currently supported, although 3D volume rendering is available (3D Standard visualization mode).
 
 - Automatic dose constraints evaluation is implemented only for treatment plans corresponding to lung cancer (conventional fractionation). Future development will extend coverage to additional body sites and fractionation schemes.
 
-- The GUI is implemented using QtPy and incorporates multiple Napari viewers for standard and advanced visualization modes. Due to current limitations in signal handling between viewers, some interactive controls are temporarily disabled to prevent conflicting states. Furthermore, to maintain consistent display of content, certain panels are recreated rather than updated in place. Finally, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable functionality, while future updates will enhance state management and interactivity.
-
-- Unit tests for core numerical computations have been included, although validation against commercial TPS outputs or large multi-institutional datasets has not yet been performed.
+- The GUI is implemented using QtPy and incorporates multiple napari viewers for standard and advanced visualization modes. Some interactive controls are temporarily disabled to prevent conflicting states. Furthermore, to maintain consistent display of content, certain panels are recreated rather than updated in place. Finally, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable function, while future updates will enhance state management and interactivity.
 
 
 ## References
