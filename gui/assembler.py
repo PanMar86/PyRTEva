@@ -1,7 +1,7 @@
 from gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel, generate_status_bar_panel,
                             generate_menu_button, generate_buttonbar)
-from gui.callbacks import (load_patient_data, apply_user_preferences, generate_intermediate_data, display_visualisation,
-                           display_dose_volume_histograms, display_evaluation_report)
+from gui.callbacks import (load_patient_data, store_user_preferences, generate_intermediate_data, display_visualisation,
+                           display_dose_volume_histograms, display_evaluation_report, store_treatment_parameters)
 from qtpy.QtWidgets import QPushButton
 
 
@@ -36,7 +36,7 @@ def assemble_gui(data_container):
     buttons.append(load_data_button)
 
     process_data_button = QPushButton("Process patient data")
-    process_data_button.clicked.connect(lambda: apply_user_preferences(data_container, status_bar))
+    process_data_button.clicked.connect(lambda: store_user_preferences(data_container, status_bar))
     process_data_button.clicked.connect(lambda: generate_intermediate_data(data_container, status_bar))
     buttons.append(process_data_button)
 
@@ -61,6 +61,7 @@ def assemble_gui(data_container):
     buttons.append(dvh_button)
 
     plan_evaluation_button = QPushButton("Evaluate plan")
+    plan_evaluation_button.clicked.connect(lambda: store_treatment_parameters(data_container, status_bar))
     plan_evaluation_button.clicked.connect(lambda: display_evaluation_report(data_container, status_bar, plan_evaluation_panel))
     buttons.append(plan_evaluation_button)
 

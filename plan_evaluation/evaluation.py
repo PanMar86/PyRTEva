@@ -108,8 +108,8 @@ def evaluate_dose_constraints(dose_volume_histograms, dose_constraints):
 def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_dose_map, dose_volume_histograms):
     """
     This function computes commonly used dose conformance indices and summarizes the results in a tabular format.
-    Homogeneity index, conformity index, healthy tissue conformity index, conformation number, conformal index and
-    gradient index are computed for each planning target volume (ptv) structure.
+    Homogeneity index, conformity index, healthy tissue conformity index, conformation number and gradient index are
+    computed for each planning target volume (ptv) structure.
 
     Parameters
     ----------

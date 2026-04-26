@@ -131,7 +131,7 @@ def generate_user_preferences_window(data_container):
 
     dose_grid_interpolation_method = QComboBox()
     dose_grid_interpolation_method.setObjectName("dose_grid_interpolation_method")
-    dose_grid_interpolation_method.addItems(["linear", "nearest", "slinear", "cubic", "quintic", "pchip"])
+    dose_grid_interpolation_method.addItems(["Linear", "Nearest", "Slinear", "Cubic", "Quintic", "Pchip"])
     dose_grid_interpolation_method.setCurrentText("linear")
 
     dose_bin_width = QDoubleSpinBox()
@@ -262,6 +262,71 @@ def generate_user_preferences_window(data_container):
     window_layout.addWidget(apply_button, alignment = Qt.AlignmentFlag.AlignRight)
     window_layout.addWidget(alg_settings_outer_container)
     window_layout.addWidget(structures_info_outer_container)
+    window.setLayout(window_layout)
+
+    return window
+
+
+def generate_treatment_parameters_window():
+    """
+    This function generates an auxiliary window that acts as a user interaction panel. The user is allowed to select
+    the treatment site as well as the fractionation scheme.
+
+    Returns
+    -------
+    window : qtpy.QtWidgets.QDialog
+        Auxiliary window.
+    """
+
+    window = QDialog()
+    window.setWindowTitle("Treatment Parameters")
+    window.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
+    window.setFixedSize(QSize(370, 200))
+    window_layout = QVBoxLayout()
+    window_layout.setSpacing(10)
+
+    with open("gui/custom_styles/treatment_parameters_window.qss", mode="r") as treatment_parameters_window_qss:
+        window.setStyleSheet(treatment_parameters_window_qss.read())
+
+    treatment_parameters_outer_container = QGroupBox()
+    treatment_parameters_outer_container.setObjectName("treatment_parameters_outer_container")
+    treatment_parameters_outer_container_layout = QVBoxLayout()
+    treatment_parameters_outer_container_layout.setContentsMargins(10,10,10,10)
+
+    treatment_parameters_inner_container = QWidget()
+    treatment_parameters_inner_container.setObjectName("treatment_parameters_inner_container")
+    treatment_parameters_inner_container_layout = QGridLayout()
+    treatment_parameters_inner_container_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+    treatment_site = QComboBox()
+    treatment_site.setObjectName("treatment_site")
+    treatment_site.addItem("Lung")
+    treatment_site.setCurrentText("Lung")
+
+    fractionation_scheme = QComboBox()
+    fractionation_scheme.setObjectName("fractionation_scheme")
+    fractionation_scheme.addItem("Conventional")
+    fractionation_scheme.setCurrentText("Conventional")
+
+    treatment_parameters_inner_container_layout.addWidget(QLabel("Treatment Site:"), 0, 0)
+    treatment_parameters_inner_container_layout.addWidget(treatment_site, 0, 1)
+    treatment_parameters_inner_container_layout.addWidget(QLabel("Dose Fractionation Scheme:"), 1, 0)
+    treatment_parameters_inner_container_layout.addWidget(fractionation_scheme, 1, 1)
+    treatment_parameters_inner_container.setLayout(treatment_parameters_inner_container_layout)
+
+    principal_message = QLabel("Please select the treatment site as well as the dose fractionation scheme.")
+    principal_message.setWordWrap(True)
+
+    treatment_parameters_outer_container_layout.addWidget(principal_message)
+    treatment_parameters_outer_container_layout.addWidget(treatment_parameters_inner_container)
+    treatment_parameters_outer_container.setLayout(treatment_parameters_outer_container_layout)
+
+    apply_button = QPushButton("Apply")
+    apply_button.setObjectName("apply_button")
+    apply_button.clicked.connect(lambda: window.close())
+
+    window_layout.addWidget(apply_button, alignment = Qt.AlignmentFlag.AlignRight)
+    window_layout.addWidget(treatment_parameters_outer_container)
     window.setLayout(window_layout)
 
     return window

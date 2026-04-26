@@ -1,9 +1,10 @@
 import napari
+import os
 import pickle
 from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QBrush, QColor
-from gui.components import generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel
+from qtpy.QtGui import QColor
+from gui.components import generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel, generate_treatment_parameters_window
 from dicom_io.ct_series import load_ct_series
 from dicom_io.structures import load_structures
 from dicom_io.dose import load_dose
@@ -64,10 +65,10 @@ def load_patient_data(data_container, status_bar):
     return None
 
 
-def apply_user_preferences(data_container, status_bar):
+def store_user_preferences(data_container, status_bar):
     """
-    This function stores and applies the user preferences such as algorithms settings, structures' types and prescribed
-    doses (to the structures for which the concept of prescribed dose is applicable).
+    This function stores the user preferences such as algorithms settings, structures' types and prescribed doses
+    (to the structures for which the concept of prescribed dose is applicable).
 
     Parameters
     ----------
@@ -78,11 +79,11 @@ def apply_user_preferences(data_container, status_bar):
         Status bar.
     """
 
-    update_status_bar(status_bar, "User preferences are being applied...")
+    update_status_bar(status_bar, "User preferences are being stored...")
     user_preferences_window = generate_user_preferences_window(data_container)
     user_preferences_window.exec()
 
-    dose_grid_interpolation_method =  user_preferences_window.findChild(QComboBox,"dose_grid_interpolation_method").currentText()
+    dose_grid_interpolation_method =  user_preferences_window.findChild(QComboBox,"dose_grid_interpolation_method").currentText().lower()
     data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"] = dose_grid_interpolation_method
     dose_bin_width = user_preferences_window.findChild(QDoubleSpinBox,"dose_bin_width").value()
     data_container["AlgorithmsSettings"]["DoseBinWidth"] = dose_bin_width
@@ -117,7 +118,7 @@ def apply_user_preferences(data_container, status_bar):
                                                   "StructureType" : structure["StructureType"],
                                                   "PrescribedDose" : prescribed_dose})
 
-    update_status_bar(status_bar, "User preferences have been successfully applied.")
+    update_status_bar(status_bar, "User preferences have been successfully stored.")
 
     return None
 
@@ -244,6 +245,38 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
     return None
 
 
+def store_treatment_parameters(data_container, status_bar):
+    """
+    This function stores the treatment parameters (treatment site and fractionation scheme).
+
+    Parameters
+    ----------
+    data_container : dict
+        Dictionary acting as a (shared) data container used by the callback functions.
+
+    status_bar : qtpy.QtWidgets.QStatusBar
+        Status bar.
+    """
+
+    update_status_bar(status_bar, "Treatment parameters are being stored...")
+
+    treatment_parameters_window = generate_treatment_parameters_window()
+    treatment_parameters_window.exec()
+
+    treatment_site = treatment_parameters_window.findChild(QComboBox, "treatment_site").currentText().lower()
+    data_container["TreatmentSite"] = treatment_site
+    fractionation_scheme = treatment_parameters_window.findChild(QComboBox, "fractionation_scheme").currentText().lower()
+    data_container["FractionationScheme"] = fractionation_scheme
+
+    update_status_bar(status_bar, "Treatment parameters have been successfully stored.")
+
+    print(data_container["TreatmentSite"])
+    print(data_container["FractionationScheme"])
+
+
+    return None
+
+
 def display_evaluation_report(data_container, status_bar, evaluation_panel):
     """
     This function triggers the execution of the functions that evaluate the treatment plan based on a group of
@@ -270,11 +303,16 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
     temporary_content.hide()
     temporary_content.deleteLater()
 
-    with open("plan_evaluation/dose_constraints/conventional_fractionation/lung_cancer_dose_constraints.pkl", mode="rb") as f:
+    dose_constraints_dir = os.path.join("plan_evaluation", "dose_constraints", "treatment_site",
+                                        data_container["TreatmentSite"], data_container["FractionationScheme"])
+    dose_constraints_filename = os.listdir(dose_constraints_dir)[0]
+    dose_constraints_path = os.path.join(dose_constraints_dir, dose_constraints_filename)
+
+    with open(dose_constraints_path, mode="rb") as f:
         dose_constraints = pickle.load(f)
 
     # Map the oars' encountered names to standard names.
-    identify_oar_proper_names(data_container["DoseVolumeHistograms"])
+    identify_oar_proper_names(data_container["DoseVolumeHistograms"], data_container["TreatmentSite"])
 
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(data_container["DoseVolumeHistograms"])
     dose_constraints_evaluation = evaluate_dose_constraints(data_container["DoseVolumeHistograms"], dose_constraints)

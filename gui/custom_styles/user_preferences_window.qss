@@ -13,7 +13,6 @@ QWidget#alg_settings_inner_container QComboBox {background-color: #6B6F83; min-w
 QGroupBox#structures_info_outer_container {border-style: solid; border-color: #6B6F83; border-width: 2px; border-radius: 6px; font-size: 12px}
 QGroupBox#structures_info_outer_container QLabel {font-size: 14px}
 
-
 QScrollArea#structures_info_scrollable_area {border-style: solid; border-color: #6B6F83; border-width: 2px; border-radius: 6px}
 QScrollArea#structures_info_scrollable_area QWidget QGroupBox {background-color: black; border-style: solid; border-color: silver; border-width: 1px; border-radius:6px}
 QScrollArea#structures_info_scrollable_area QWidget QGroupBox QLabel {min-width: 120px; max-width: 120px; font-size: 14px; margin-left: 5px}
