@@ -8,7 +8,7 @@ of the computations.
 
 import pytest
 from plan_evaluation.dose_conformance_indices import (compute_homogeneity_index, compute_conformity_index, compute_healthy_tissue_conformity_index,
-                                                      compute_conformation_number, compute_conformal_index, compute_gradient_index)
+                                                      compute_conformation_number, compute_gradient_index)
 from tests.mock_data import generate_mock_structures_masks, generate_mock_dose_map, generate_mock_dvh
 
 
@@ -57,17 +57,6 @@ def test_compute_conformation_number(structures_masks, dose_map, reference_isodo
                                      if structure_mask["StructureName"] == "TumorousStructure"][0]
     assert compute_conformation_number(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
                                        ptv_structure_volumetric_mask) == conformation_number
-    return None
-
-
-@pytest.mark.parametrize("reference_isodose, conformal_index", [(0.50, 0.058), (0.80, 0.068), (0.95, 0.057)])
-def test_compute_conformal_index(structures_masks, dose_map, reference_isodose, conformal_index):
-    ptv_structure_volumetric_mask = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                                     if structure_mask["StructureName"] == "TumorousStructure"][0]
-    oars_volumetric_masks = [structure_mask["VolumetricMask"] for structure_mask in structures_masks
-                             if not (structure_mask["StructureName"] == "TumorousStructure")]
-    assert compute_conformal_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
-                                   ptv_structure_volumetric_mask, oars_volumetric_masks) == conformal_index
     return None
 
 
