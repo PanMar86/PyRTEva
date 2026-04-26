@@ -270,10 +270,6 @@ def store_treatment_parameters(data_container, status_bar):
 
     update_status_bar(status_bar, "Treatment parameters have been successfully stored.")
 
-    print(data_container["TreatmentSite"])
-    print(data_container["FractionationScheme"])
-
-
     return None
 
 
