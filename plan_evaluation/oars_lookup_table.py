@@ -1,9 +1,9 @@
 """
 This dictionary defines a lookup table to allow the detection of various organs at risk (OARs) and the evaluation of the
 treatment plan quality based on its compliance with the corresponding dose constraints. Each key corresponds to a
-standardized OAR name, while the associated value is a list of lowercase variants that may appear in clinical practice
-due to differences in naming conventions. The dictionary intentionally contains redundant and overlapping patterns to
-maximize robustness against inconsistent naming.
+standardized OAR name, while the associated value is a list of variants that may appear in clinical practice due to
+differences in naming conventions. The dictionary intentionally contains redundant and overlapping patterns to maximize
+robustness against inconsistent naming.
 """
 
 oars_encountered_names = {"Bilateral whole lungs": ["lungstotal", "lungs_total", "lungs total", "lungs-total",
