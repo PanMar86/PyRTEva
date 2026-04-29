@@ -10,11 +10,11 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 ## Features
 
 - DICOM RT support. 
-- Hybrid structures identification (based on regex and user verification).
-- Interactive 2D and 3D visualization including advanced options such as dose homogeneity and dose gradient mode.
+- Hybrid identification of structures (based on regex and user verification).
+- 2D and 3D visualization including advanced options such as dose homogeneity and dose gradient modes.
 - Support for multiple planning target volumes.
-- DVH computation with support for common dose metrics (Dmax, Dmean, Dx, Vx).
-- Computation of standard plan evaluation metrics, including dose conformity index and dose homogeneity index.
+- Interactive dose volume histograms with support for common dose metrics (Dmax, Dmean, Dx, Vx).
+- Standard plan evaluation metrics, including dose conformity index and dose homogeneity index.
 - Automatic evaluation of dose constraints based on established guidelines (RTOG, QUANTEC), with clear reporting and highlighting of violations.
 - Modern, lightweight Qt-based GUI, integrating visualization, DVH analysis, and dose constraints evaluation.
 
