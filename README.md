@@ -17,6 +17,8 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 - Standard plan evaluation metrics, including dose conformity index and dose homogeneity index.
 - Automatic evaluation of dose constraints based on established guidelines (RTOG, QUANTEC), with clear reporting and highlighting of violations.
 - Modern, lightweight Qt-based GUI, integrating visualization, DVH analysis, and dose constraints evaluation.
+- Preliminary validation against Varian Eclipse TPS, using a dataset consisting of three lung cancer patients.
+  Mean accuracy (across all patients and structures) for the dosimetric indices Dmin, Dmax and Dmean was below 2%, 1% and 1% respectively.
 
 
 ## Screenshots
