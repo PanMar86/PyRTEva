@@ -21,6 +21,10 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
   Mean accuracy (across all patients and structures) for the dosimetric indices Dmin, Dmax and Dmean was below 2%, 1% and 1% respectively.
 
 
+## Main workflow
+![Main Workflow](screenshots/workflow.png)
+
+
 ## Screenshots
 ![GUI](screenshots/gui_1.png)
 ![GUI_2](screenshots/gui_2.png)
