@@ -41,7 +41,7 @@ Moreover, different implementation of the algorithms related to structures masks
 
 ##  Demo
 
-[![Watch the demo](screenshots/gui_blank.png)](https://youtu.be/cX_1yOSJn6I)
+[![Watch the demo](screenshots/gui_blank.png)](https://youtu.be/iY8NaDWlc4A)
 
 
 ## Run locally
