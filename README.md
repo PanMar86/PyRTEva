@@ -17,8 +17,14 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 - Standard plan evaluation metrics, including dose conformity index and dose homogeneity index.
 - Automatic evaluation of dose constraints based on established guidelines (RTOG, QUANTEC), with clear reporting and highlighting of violations.
 - Modern, lightweight Qt-based GUI, integrating visualization, DVH analysis, and dose constraints evaluation.
-- Preliminary validation against Varian Eclipse TPS, using a dataset consisting of three lung cancer patients.
-  Mean accuracy (across all patients and structures) for the dosimetric indices Dmin, Dmax and Dmean was below 2%, 1% and 1% respectively.
+
+
+## Validation
+
+Preliminary validation against Varian Eclipse TPS has been conducted, using a dataset consisting of three lung cancer patients. 
+The mean accuracy, across all patients and structures, for the dosimetric indices Dmin, Dmax and Dmean was below 2%, 1% and 1% respectively. 
+Such deviations are generally expected due to differences in parameters such as dose bin width and dose grid interpolation method. 
+Moreover, different implementation of the algorithms related to structures masks generation and dosimetric indices computation can account for the observed discrepancies.   
 
 
 ## Main workflow
@@ -31,7 +37,7 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 
 
 ##  Demo
-[![Watch the demo](screenshots/gui_blank.png)](https://youtu.be/cX_1yOSJn6I)
+[![Watch the demo](screenshots/gui_blank.png)](https://youtu.be/iY8NaDWlc4A)
 
 
 ## Source Code
@@ -42,17 +48,13 @@ Access to the complete codebase can be provided upon request.
 
 ## Limitations
 
-- While the toolkit supports core DICOM RT objects (CT, RTSTRUCT, RTDOSE, RTPLAN), it does not yet handle all vendor-specific edge cases, private tags, or uncommon acquisition geometries.
+- While the toolkit supports DICOM RT objects, it does not yet handle all vendor-specific edge cases, private tags, or uncommon acquisition geometries.
 
-- Dose maps computation relies on the assumption of a rectangular dose grid that has the same orientation as the patient’s coordinate system. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Non-rectangular grids, rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
-
-- 2D Standard visualization mode supports only axial view. Sagittal and coronal views are not currently supported, although 3D volume rendering is available (3D Standard visualization mode).
+- Dose maps computation relies on the assumption of a dose grid that has the same orientation as the CT series. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
 
 - Automatic dose constraints evaluation is implemented only for treatment plans corresponding to lung cancer (conventional fractionation). Future development will extend coverage to additional body sites and fractionation schemes.
 
-- The GUI is implemented using QtPy and incorporates multiple Napari viewers for standard and advanced visualization modes. Due to current limitations in signal handling between viewers, some interactive controls are temporarily disabled to prevent conflicting states. Furthermore, to maintain consistent display of content, certain panels are recreated rather than updated in place. Finally, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable functionality, while future updates will enhance state management and interactivity.
-
-- Unit tests for core numerical computations have been included, although validation against commercial TPS outputs or large multi-institutional datasets has not yet been performed.
+- The GUI is implemented using QtPy and incorporates multiple napari viewers for standard and advanced visualization modes. Some interactive controls are temporarily disabled to prevent conflicting states. Furthermore, to maintain consistent display of content, certain panels are recreated rather than updated in place. Finally, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable function, while future updates will enhance state management and interactivity.
 
 
 ## References
