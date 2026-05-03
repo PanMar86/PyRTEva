@@ -24,7 +24,7 @@ PyRTEva is a Python-based toolkit designed to automate the evaluation of radioth
 
 Preliminary validation against Varian Eclipse TPS has been conducted, using a dataset consisting of three lung cancer patients. 
 The mean accuracy, across all patients and structures, for the dosimetric indices Dmin, Dmax and Dmean was below 2%, 1% and 1% respectively. 
-Such deviations are generally expected due to differences in parameters such as dose bin width and dose grid interpolation method. 
+Small deviations are generally expected due to difference in parameters such as dose bin width and dose grid interpolation method. 
 Moreover, different implementation of the algorithms related to structures masks generation and dosimetric indices computation can account for the observed discrepancies.   
 
 
