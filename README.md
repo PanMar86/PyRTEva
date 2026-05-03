@@ -81,7 +81,7 @@ python main.py
 
 - Automatic dose constraints evaluation is implemented only for treatment plans corresponding to lung cancer (conventional fractionation). Future development will extend coverage to additional body sites and fractionation schemes.
 
-- The GUI is implemented using QtPy and incorporates multiple napari viewers for standard and advanced visualization modes. Some interactive controls are temporarily disabled to prevent conflicting states. Furthermore, to maintain consistent display of content, certain panels are recreated rather than updated in place. Finally, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable function, while future updates will enhance state management and interactivity.
+- To maintain consistent display of content, certain GUI panels are recreated rather than updated in place. Moreover, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable function, while future updates will enhance state management and interactivity.
 
 
 ## References
