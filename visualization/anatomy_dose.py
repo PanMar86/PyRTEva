@@ -352,7 +352,7 @@ def generate_custom_colormaps():
 
             colors[0] = [0, 0, 0, 1]
 
-        custom_cmap = Colormap(colors, name = cmap_name.lower())
+        custom_cmap = Colormap(colors, name = cmap_name)
         custom_cmaps.append(custom_cmap)
 
     for name, colors  in degenerated_cmaps.items():
