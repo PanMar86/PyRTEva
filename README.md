@@ -79,7 +79,7 @@ python main.py
 
 - Dose maps computation relies on the assumption of a dose grid that has the same orientation as the CT series. In addition, it is assumed that the dose grid planes are fully or partially aligned with the slices of the CT series, along the z-axis. Rotated grids, or grids that are not z-axis aligned (fully or partially) with the CT series are not currently supported.
 
-- Automatic dose constraints evaluation is implemented only for treatment plans corresponding to lung cancer (conventional fractionation). Future development will extend coverage to additional body sites and fractionation schemes.
+- Automatic dose constraints evaluation is implemented only for treatment plans corresponding to brain and lung cancer (conventional fractionation). Future development will extend coverage to additional body sites and fractionation schemes.
 
 - To maintain consistent display of content, certain GUI panels are recreated rather than updated in place. Moreover, evaluating multiple treatment plans currently requires restarting the GUI. These design choices ensure reliable function, while future updates will enhance state management and interactivity.
 
