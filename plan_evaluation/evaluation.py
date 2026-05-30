@@ -101,6 +101,7 @@ def evaluate_dose_constraints(dose_volume_histograms, dose_constraints):
         row_index += 1
 
     evaluation_table[evaluation_table == ""] = "-"
+    evaluation_table.sort_values(by="Organ At Risk (OAR)", inplace=True)
 
     return evaluation_table
 
@@ -180,6 +181,8 @@ def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_do
 
         evaluation_table.loc[row_index, "Gradient Index"] = compute_gradient_index(prescribed_dose, volumetric_dose_map)
 
+    evaluation_table.sort_values(by="Structure", inplace=True)
+
     return evaluation_table
 
 
@@ -230,5 +233,7 @@ def evaluate_dosimetric_indices(dose_volume_histograms):
         evaluation_table.loc[row_index, "D2 (Gy)"] = compute_Dv(tumorous_structures_and_oars_dvhs[row_index], 2)
         evaluation_table.loc[row_index, "D95 (Gy)"] = compute_Dv(tumorous_structures_and_oars_dvhs[row_index], 95)
         evaluation_table.loc[row_index, "D98 (Gy)"] = compute_Dv(tumorous_structures_and_oars_dvhs[row_index], 98)
+
+    evaluation_table.sort_values(by="Structure", inplace=True)
 
     return evaluation_table

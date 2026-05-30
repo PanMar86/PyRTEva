@@ -317,6 +317,8 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
                                                             data_container["DoseMaps"]["VolumetricDoseMap"],
                                                             data_container["DoseVolumeHistograms"])
 
+    dose_constraints.sort_values(by="Organ At Risk (OAR)", inplace=True)
+
     report_tables_data = {"Dosimetric Indices" : dosimetric_indices_evaluation,
                           "Dose Conformance" : dose_conformance_evaluation,
                           "Dose Constraints" : dose_constraints,
