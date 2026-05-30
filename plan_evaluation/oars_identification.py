@@ -37,14 +37,14 @@ def identify_oar_proper_names(dose_volume_histograms, treatment_site):
 def search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site):
     """
     This function handles some special cases regarding the encountered oars' names. On some treatment sites, the planning
-    target volume lies within a structure, which itself is considered an OAR (for example in lung cancer, the combined
-    lungs minus the gross tumor volume is an OAR that has to be spared). If both structures (the whole structure and the
-    structure that has the gross tumor volume subtracted) are present, no further action is taken. If only the whole
-    structure is present, it is quietly assumed that it has been contoured so that it doesn't contain the gross tumor
-    volume. In addition, in the case of lung cancer with pneumonectomy, due to improper oar naming, the single lung might
-    have been assigned with the standard name "Bilateral whole lungs", "Left lung" or "Right lung". In both cases, the
-    renaming is essential so that the corresponding dose constraints can be successfully extracted from the related
-    dataframe.
+    target volume lies (partially or fully) within a structure, which itself is considered an OAR (for example in
+    lung cancer, the combined lungs minus the gross tumor volume is an OAR that has to be spared). If both structures
+    (the whole structure and the structure that has the gross tumor volume subtracted) are present, no further action is
+    taken. If only the whole structure is present, it is quietly assumed that it has been contoured so that it doesn't
+    contain the gross tumor volume. In addition, in the case of lung cancer with pneumonectomy, due to improper oar
+    naming, the single lung might have been assigned with the standard name "Bilateral whole lungs", "Left lung" or
+    "Right lung". In both cases, the renaming is essential so that the corresponding dose constraints can be successfully
+    extracted from the related dataframe.
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ def search_for_special_structures(dose_volume_histograms, oars_standard_names, t
 
                     break
 
-    elif treatment_site == "lung_pneumonectomy":
+    if treatment_site == "lung_pneumonectomy":
 
         if "Contralateral lung" not in oars_standard_names:
 
@@ -92,6 +92,18 @@ def search_for_special_structures(dose_volume_histograms, oars_standard_names, t
                 if dvh["StructureName"] in ["Bilateral whole lungs", "Left lung", "Right lung"] :
 
                     dvh["StructureName"] = "Contralateral lung"
+
+                    break
+
+    if treatment_site == "brain":
+
+        if ("Whole brain minus GTV" not in oars_standard_names) and ("Whole brain" in oars_standard_names):
+
+            for dvh in dvhs:
+
+                if dvh["StructureName"] == "Whole brain":
+
+                    dvh["StructureName"] = "Whole brain minus GTV"
 
                     break
 
