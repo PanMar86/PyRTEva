@@ -15,7 +15,7 @@ from computations.dose_maps import generate_dose_maps
 from computations.dose_volume_histograms import generate_dose_volume_histogram
 from visualization.anatomy_dose import generate_visualisation
 from visualization.dose_volume_histograms import generate_dose_volume_histogram_plots
-from plan_evaluation.oars_identification import identify_oar_proper_names
+from plan_evaluation.oars_identification import identify_oar_standard_names
 from plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_conformance, evaluate_dosimetric_indices
 
 
@@ -308,7 +308,7 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
         dose_constraints = pickle.load(f)
 
     # Map the oars' encountered names to standard names.
-    identify_oar_proper_names(data_container["DoseVolumeHistograms"], data_container["TreatmentSite"])
+    identify_oar_standard_names(data_container["DoseVolumeHistograms"], data_container["TreatmentSite"])
 
     dosimetric_indices_evaluation = evaluate_dosimetric_indices(data_container["DoseVolumeHistograms"])
     dose_constraints_evaluation = evaluate_dose_constraints(data_container["DoseVolumeHistograms"], dose_constraints)

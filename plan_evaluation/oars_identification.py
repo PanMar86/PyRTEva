@@ -1,7 +1,7 @@
 from plan_evaluation.oars_lookup_table import oars_encountered_names
 
 
-def identify_oar_proper_names(dose_volume_histograms, treatment_site):
+def identify_oar_standard_names(dose_volume_histograms, treatment_site):
     """
     This function identifies the proper names of the organs at risk. It uses a dictionary, where each key corresponds
     to a standardized OAR name, while the associated value is a list of variants that may appear in clinical practice
