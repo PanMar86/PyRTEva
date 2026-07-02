@@ -30,46 +30,36 @@ Moreover, different implementation of the algorithms related to structures masks
 
 ## Main workflow
 
-![Main Workflow](screenshots/workflow.png)
+![Main Workflow](docs/screenshots/workflow.png)
 
 
 ## Screenshots
 
-![GUI](screenshots/gui_1.png)
-![GUI_2](screenshots/gui_2.png)
+![GUI](docs/screenshots/gui_1.png)
+![GUI_2](docs/screenshots/gui_2.png)
 
 
 ##  Demo
 
-[![Watch the demo](screenshots/gui_blank.png)](https://youtu.be/iY8NaDWlc4A)
+[![Watch the demo](docs/screenshots/gui_blank.png)](https://youtu.be/iY8NaDWlc4A)
 
 
-## Run locally
-
-Clone the project.
-```
-git clone https://github.com/PanMar86/PyRTEva-Engine.git
-```
-
-Navigate to the project (root) directory.
-```
-cd PyRTEva-Engine
-```
+## Installation instructions
 
 Create a virtual environment and activate it.
 ```
-conda create --name PyRTEva python=3.13
+conda create -n PyRTEva python=3.13
 conda activate PyRTEva
 ```
 
-Install dependencies.
+Install through GitHub.
 ```
-pip install -r requirements.txt
+pip install git+https://github.com/PanMar86/PyRTEva.git
 ```
 
 Launch the GUI.
 ```
-python main.py
+pyrteva
 ```
 
 

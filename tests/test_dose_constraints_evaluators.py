@@ -6,9 +6,9 @@ account.
 """
 
 import pytest
-from plan_evaluation.dose_constraints_evaluators import (evaluate_maximum_dose_constraint, evaluate_mean_dose_constraint, evaluate_volume_dose_constraints,
-                                                         evaluate_dose_volume_constraints, evaluate_dose_abs_volume_constraints)
-from tests.mock_data import generate_mock_dvh, generate_mock_dose_constraints, generate_mock_evaluation_table
+from pyrteva.plan_evaluation.dose_constraints_evaluators import (evaluate_maximum_dose_constraint, evaluate_mean_dose_constraint, evaluate_volume_dose_constraints,
+                                                                     evaluate_dose_volume_constraints, evaluate_dose_abs_volume_constraints)
+from mock_data import generate_mock_dvh, generate_mock_dose_constraints, generate_mock_evaluation_table
 
 
 @pytest.fixture(scope="module")

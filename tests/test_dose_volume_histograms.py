@@ -8,8 +8,8 @@ reproducible test outcomes. All the values that are used during the assessments 
 
 import numpy as np
 import pytest
-from computations.dose_volume_histograms import generate_dose_volume_histogram
-from tests.mock_data import generate_mock_ct_series_acquisition_parameters, generate_mock_structures_masks, generate_mock_dose_map
+from pyrteva.computations.dose_volume_histograms import generate_dose_volume_histogram
+from mock_data import generate_mock_ct_series_acquisition_parameters, generate_mock_structures_masks, generate_mock_dose_map
 
 
 @pytest.fixture(scope="module")

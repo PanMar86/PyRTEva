@@ -1,7 +1,4 @@
-.idea/
-.venv/
+rest/
 .pytest_cache/
 __pycache__/
-sample_data/
-rest/
-testing
+.idea/

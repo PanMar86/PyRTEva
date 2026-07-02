@@ -7,9 +7,9 @@ functions. Parametrized tests cover a range of dose-volume pairs to verify numer
 """
 
 import pytest
-from plan_evaluation.dosimetric_indices import (compute_maximum_dose, compute_minimum_dose, compute_mean_dose,
-                                                compute_Vd, compute_Dv, compute_Dabsv)
-from tests.mock_data import generate_mock_dvh
+from pyrteva.plan_evaluation.dosimetric_indices import (compute_maximum_dose, compute_minimum_dose, compute_mean_dose,
+                                                            compute_Vd, compute_Dv, compute_Dabsv)
+from mock_data import generate_mock_dvh
 
 
 @pytest.fixture(scope="module")
