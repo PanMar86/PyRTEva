@@ -54,7 +54,7 @@ conda activate PyRTEva
 
 Install through GitHub.
 ```
-pip install git+https://github.com/PanMar86/PyRTEva.git@project_structure_refactored
+pip install git+https://github.com/PanMar86/PyRTEva.git
 ```
 
 Launch the GUI.
