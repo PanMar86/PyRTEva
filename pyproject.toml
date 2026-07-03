@@ -16,7 +16,7 @@ testpaths = ["tests"]
 
 [project]
 name = "PyRTEva"
-version = "1.0.0"
+version = "0.1.0"
 description = "A Python-based toolkit designed to automate the evaluation of radiotherapy treatment plans."
 readme = "README.md"
 authors = [{name = "Panagiotis Marentakis", email = "panmarentakis86@gmail.com"}]
