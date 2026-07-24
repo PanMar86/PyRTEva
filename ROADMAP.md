@@ -2,6 +2,7 @@
 
 This document provides a list of planned improvements as well as future directions for PyRTEva.
 Development priorities might change as the project is continuously evolving.
+
 ---
 
 ## Short-term 
