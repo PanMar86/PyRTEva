@@ -30,3 +30,4 @@ Development priorities might change as the project is continuously evolving.
   of the associated functions (migrating from pandas dataframes)
 - Handling of GUI freezing during heavy computations
 - Appropriate event handling for multiple napari viewers
+- Update (blank) napari viewers without reinstantiating them
