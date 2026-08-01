@@ -14,6 +14,12 @@ pyrteva = ["assets/**/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.ruff]
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+
 [project]
 name = "PyRTEva"
 version = "0.1.0"
