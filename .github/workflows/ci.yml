@@ -1,0 +1,22 @@
+name: PyRTEva CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  unit_tests:
+    name: Run unit tests defined by pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install .[dev]
+      - name: Run tests
+        run: pytest
