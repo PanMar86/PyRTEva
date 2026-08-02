@@ -162,7 +162,7 @@ oars_encountered_names = {"Bilateral whole lungs": ["lungstotal", "lungs_total",
                                                               "leftanteriordescartery", "left_anterior_desc_artery", "left anterior desc artery", "left-anterior-desc-artery",
                                                               "leftanteriordesc", "left_anterior_desc", "left anterior desc", "left-anterior-desc",
                                                               "leftantdescendingartery", "left_ant_descending_artery", "left ant descending artery", "left-ant-descending-artery",
-                                                              "leftantdescending", "left_ant_descending", "left ant descending", "left-ant-descending"
+                                                              "leftantdescending", "left_ant_descending", "left ant descending", "left-ant-descending",
                                                               "leftantdesc", "left_ant_desc", "left ant desc", "left-ant-desc",
                                                               "ladartery", "lad_artery", "lad artery", "lad-artery",
                                                               "ladart", "lad_art", "lad art", "lad-art",
