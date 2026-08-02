@@ -17,6 +17,12 @@ testpaths = ["tests"]
 [tool.ruff]
 target-version = "py313"
 
+[tool.ruff.lint]
+ignore = ["RUF015",
+          "I001",
+          "SIM102",
+          "SIM113"]
+
 [tool.mypy]
 python_version = "3.13"
 
@@ -41,7 +47,9 @@ dependencies = ["matplotlib==3.10.6",
                 "scipy==1.16.2"]
 
 [project.optional-dependencies]
-dev = ["pytest==9.0.1"]
+dev = ["pytest==9.0.1",
+       "ruff==0.16.1",
+       "mypy==2.3.0"]
 
 [project.scripts]
 pyrteva = 'pyrteva.main:main'
