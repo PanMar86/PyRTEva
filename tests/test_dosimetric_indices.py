@@ -19,31 +19,25 @@ def dvh():
 
 def test_compute_maximum_dose(dvh):
     assert compute_maximum_dose(dvh) == 0.95
-    return None
 
 
 def test_compute_minimum_dose(dvh):
     assert compute_minimum_dose(dvh) == 0.05
-    return None
 
 
 def test_compute_mean_dose(dvh):
     assert compute_mean_dose(dvh) == 0.44
-    return None
 
 @pytest.mark.parametrize("volume, dose", [(100, 0), (60, 0.3), (37.5, 0.55), (0, 1)])
 def test_compute_Vd(dvh, volume, dose):
     assert compute_Vd(dvh, dose) == volume
-    return None
 
 
 @pytest.mark.parametrize("volume, dose", [(100, 0), (65, 0.25), (60, 0.30), (0, 1)])
 def test_compute_Dv(dvh, volume, dose):
     assert compute_Dv(dvh, volume) == dose
-    return None
 
 
 @pytest.mark.parametrize("volume, dose", [(0.06, 0), (0.036, 0.30), (0.02 ,0.65), (0, 1)])
 def test_compute_Dabsv(dvh, volume, dose):
     assert compute_Dabsv(dvh, volume) == dose
-    return None

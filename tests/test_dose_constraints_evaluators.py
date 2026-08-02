@@ -40,7 +40,6 @@ def test_evaluate_maximum_dose_constraint(dvh, constraints, evaluation_table):
         elif cases[case_index] == "Violated constraints":
             assert evaluate_maximum_dose_constraint(dvh, constraints.loc[3, "Dmax (Gy)"], evaluation_table, case_index) == "Fail"
 
-    return None
 
 
 def test_evaluate_mean_dose_constraint(dvh, constraints, evaluation_table):
@@ -57,7 +56,6 @@ def test_evaluate_mean_dose_constraint(dvh, constraints, evaluation_table):
         elif cases[case_index] == "Violated constraints":
             assert evaluate_mean_dose_constraint(dvh, constraints.loc[3, "Dmean (Gy)"], evaluation_table, case_index) == "Fail"
 
-    return None
 
 
 def test_evaluate_volume_dose_constraint(dvh, constraints, evaluation_table):
@@ -78,7 +76,6 @@ def test_evaluate_volume_dose_constraint(dvh, constraints, evaluation_table):
             assert evaluate_volume_dose_constraints(dvh, constraints.loc[3, "Vd (%, Gy)"], evaluation_table,
                                                     case_index) == "Fail"
 
-    return None
 
 
 def test_evaluate_dose_volume_constraint(dvh, constraints, evaluation_table):
@@ -99,7 +96,6 @@ def test_evaluate_dose_volume_constraint(dvh, constraints, evaluation_table):
             assert evaluate_dose_volume_constraints(dvh, constraints.loc[3, "Dv (Gy, %)"], evaluation_table,
                                                     case_index) == "Fail"
 
-    return None
 
 
 def test_evaluate_dose_abs_volume_constraint(dvh, constraints, evaluation_table):
@@ -120,4 +116,3 @@ def test_evaluate_dose_abs_volume_constraint(dvh, constraints, evaluation_table)
             assert evaluate_dose_abs_volume_constraints(dvh, constraints.loc[3, "Dabsv (Gy, cc)"], evaluation_table,
                                                         case_index) == "Fail"
 
-    return None

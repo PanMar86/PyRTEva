@@ -31,7 +31,6 @@ def identify_oar_standard_names(dose_volume_histograms, treatment_site):
 
     search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site)
 
-    return None
 
 
 def search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site):
@@ -107,4 +106,3 @@ def search_for_special_structures(dose_volume_histograms, oars_standard_names, t
 
                     break
 
-    return None

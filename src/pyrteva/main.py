@@ -22,7 +22,6 @@ def main():
     app_window.showMaximized()
     app.exec()
 
-    return None
 
 if __name__ == "__main__":
     main()

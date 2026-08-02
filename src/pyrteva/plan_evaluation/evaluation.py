@@ -148,8 +148,9 @@ def evaluate_dose_conformance(reference_isodose, prescribed_doses, volumetric_do
     ptv_structures_dvhs = [dvh for dvh in dose_volume_histograms
                            if ((dvh["StructureType"] == "Tumorous Structure") and ("ptv" in dvh["StructureName"].lower()))]
 
-    oars_dvhs = [dvh for dvh in dose_volume_histograms if dvh["StructureType"] == "Organ At Risk"]
-    oars_volumetric_masks = [oar_dvh["VolumetricMask"] for oar_dvh in oars_dvhs]
+    # They will be used in the future for the computation of COIN index.
+    #oars_dvhs = [dvh for dvh in dose_volume_histograms if dvh["StructureType"] == "Organ At Risk"]
+    #oars_volumetric_masks = [oar_dvh["VolumetricMask"] for oar_dvh in oars_dvhs]
 
     num_of_rows = len(ptv_structures_dvhs)
     columns = ["Structure", "Homogeneity Index", "Conformity Index", "HT Conformity Index",

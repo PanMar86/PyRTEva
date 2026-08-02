@@ -62,7 +62,6 @@ def load_patient_data(data_container, status_bar):
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
 
-    return None
 
 
 def store_user_preferences(data_container, status_bar):
@@ -120,7 +119,6 @@ def store_user_preferences(data_container, status_bar):
 
     update_status_bar(status_bar, "User preferences have been successfully stored.")
 
-    return None
 
 
 def generate_intermediate_data(data_container, status_bar):
@@ -159,7 +157,6 @@ def generate_intermediate_data(data_container, status_bar):
 
     update_status_bar(status_bar, "Patient data processing has been successfully completed.")
 
-    return None
 
 
 def display_visualisation(data_container, status_bar, visualisation_panel, visualization_mode, display_mode):
@@ -206,7 +203,6 @@ def display_visualisation(data_container, status_bar, visualisation_panel, visua
 
     update_status_bar(status_bar, f"{display_mode} {visualization_mode} visualisation mode has been enabled.")
 
-    return None
 
 
 def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
@@ -242,7 +238,6 @@ def display_dose_volume_histograms(data_container, status_bar, dvh_panel):
 
     update_status_bar(status_bar, "Dose volume histograms have been successfully generated.")
 
-    return None
 
 
 def store_treatment_parameters(data_container, status_bar):
@@ -270,7 +265,6 @@ def store_treatment_parameters(data_container, status_bar):
 
     update_status_bar(status_bar, "Treatment parameters have been successfully stored.")
 
-    return None
 
 
 def display_evaluation_report(data_container, status_bar, evaluation_panel):
@@ -352,7 +346,6 @@ def display_evaluation_report(data_container, status_bar, evaluation_panel):
 
     update_status_bar(status_bar, "Plan evaluation report has been successfully generated.")
 
-    return None
 
 
 def update_status_bar(status_bar, message):
@@ -372,7 +365,6 @@ def update_status_bar(status_bar, message):
     status_bar.showMessage(message)
     QApplication.processEvents()
 
-    return None
 
 
 def customize_viewer(viewer):
@@ -398,4 +390,3 @@ def customize_viewer(viewer):
             if type(widget) is napari._qt.widgets.qt_mode_buttons.QtModeRadioButton:
                 widget.setVisible(False)
 
-    return None

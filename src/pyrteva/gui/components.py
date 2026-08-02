@@ -83,7 +83,6 @@ def generate_user_preferences_window(data_container):
             QMessageBox.information(parent_widget, "Success","User preferences have been accepted.")
             parent_widget.close()
 
-        return None
 
 
     def change_state_prescribed_dose_widget(signal_text, widget):
@@ -109,7 +108,6 @@ def generate_user_preferences_window(data_container):
 
             widget.setDisabled(False)
 
-        return None
 
 
     window = QDialog()
@@ -628,4 +626,3 @@ def customize_viewer(viewer):
     viewer.window._qt_window.menuBar().setVisible(False)
     viewer.window._qt_window.statusBar().setVisible(False)
 
-    return None

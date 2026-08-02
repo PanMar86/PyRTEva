@@ -60,8 +60,8 @@ def compute_conformity_index(reference_isodose, prescribed_dose, volumetric_dose
 
     reference_isodose_volumetric_mask = np.where(volumetric_dose_map >= reference_isodose * prescribed_dose, 1, 0)
     tumorous_structure_volume = np.sum(ptv_structure_volumetric_mask)
-    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum((ptv_structure_volumetric_mask &
-                                                                      reference_isodose_volumetric_mask))
+    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum(ptv_structure_volumetric_mask &
+                                                                      reference_isodose_volumetric_mask)
 
     conformity_index = np.round(tumorous_structure_volume_enclosed_by_reference_isodose /
                                 tumorous_structure_volume, 3)
@@ -98,8 +98,8 @@ def compute_healthy_tissue_conformity_index(reference_isodose, prescribed_dose, 
 
     reference_isodose_volumetric_mask = np.where(volumetric_dose_map >= reference_isodose * prescribed_dose, 1, 0)
     volume_enclosed_by_reference_isodose = np.sum(reference_isodose_volumetric_mask)
-    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum((ptv_structure_volumetric_mask &
-                                                                      reference_isodose_volumetric_mask))
+    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum(ptv_structure_volumetric_mask &
+                                                                      reference_isodose_volumetric_mask)
 
     ht_conformity_index = np.round(tumorous_structure_volume_enclosed_by_reference_isodose /
                                    volume_enclosed_by_reference_isodose, 3)
@@ -138,8 +138,8 @@ def compute_conformation_number(reference_isodose, prescribed_dose, volumetric_d
     reference_isodose_volumetric_mask = np.where(volumetric_dose_map >= reference_isodose * prescribed_dose, 1, 0)
     volume_enclosed_by_reference_isodose = np.sum(reference_isodose_volumetric_mask)
     tumorous_structure_volume = np.sum(ptv_structure_volumetric_mask)
-    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum((ptv_structure_volumetric_mask &
-                                                                      reference_isodose_volumetric_mask))
+    tumorous_structure_volume_enclosed_by_reference_isodose = np.sum(ptv_structure_volumetric_mask &
+                                                                      reference_isodose_volumetric_mask)
 
     conformation_number = np.round(np.power(tumorous_structure_volume_enclosed_by_reference_isodose, 2) /
                                    (tumorous_structure_volume * volume_enclosed_by_reference_isodose), 3)

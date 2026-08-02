@@ -31,7 +31,6 @@ def dvh():
 @pytest.mark.parametrize("prescribed_dose, homogeneity_index", [(0.50, - 0.800), (1.00, 0.100), (1.50, 0.400)])
 def test_compute_homogeneity_index(prescribed_dose, dvh, homogeneity_index):
     assert compute_homogeneity_index(prescribed_dose, dvh) == homogeneity_index
-    return None
 
 
 @pytest.mark.parametrize("reference_isodose, conformity_index", [(0.50, 0.450), (0.80, 0.281), (0.95, 0.169)])
@@ -40,7 +39,6 @@ def test_compute_conformity_index(structures_masks, dose_map, reference_isodose,
                                      if structure_mask["StructureName"] == "TumorousStructure"][0]
     assert compute_conformity_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
                                     ptv_structure_volumetric_mask) == conformity_index
-    return None
 
 
 @pytest.mark.parametrize("reference_isodose, healthy_tissue_conformity_index", [(0.50, 0.500), (0.80, 0.500), (0.95, 0.500)])
@@ -49,7 +47,6 @@ def test_compute_healthy_tissue_conformity_index(structures_masks, dose_map, ref
                                      if structure_mask["StructureName"] == "TumorousStructure"][0]
     assert compute_healthy_tissue_conformity_index(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
                                                    ptv_structure_volumetric_mask) == healthy_tissue_conformity_index
-    return None
 
 
 @pytest.mark.parametrize("reference_isodose, conformation_number", [(0.50, 0.225), (0.80, 0.141), (0.95, 0.084)])
@@ -58,9 +55,7 @@ def test_compute_conformation_number(structures_masks, dose_map, reference_isodo
                                      if structure_mask["StructureName"] == "TumorousStructure"][0]
     assert compute_conformation_number(reference_isodose, dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"],
                                        ptv_structure_volumetric_mask) == conformation_number
-    return None
 
 
 def test_gradient_index(dose_map):
     assert compute_gradient_index(dose_map["PrescribedDose"], dose_map["VolumetricDoseMap"]) == 2.667
-    return None
