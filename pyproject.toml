@@ -15,13 +15,11 @@ pyrteva = ["assets/**/*"]
 testpaths = ["tests"]
 
 [tool.ruff]
+line-length = 120
 target-version = "py313"
 
 [tool.ruff.lint]
-ignore = ["RUF015",
-          "I001",
-          "SIM102",
-          "SIM113"]
+ignore = ["RUF015", "I001", "SIM102", "SIM113"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -35,21 +33,11 @@ authors = [{name = "Panagiotis Marentakis", email = "panmarentakis86@gmail.com"}
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.13,<3.14"
-dependencies = ["matplotlib==3.10.6",
-                "napari==0.6.5",
-                "numpy==2.3.3",
-                "pandas==2.3.3",
-                "pydicom==3.0.1",
-                "pyqtgraph==0.13.7",
-                "PySide6==6.9.2",
-                "QtPy==2.4.3",
-                "scikit-image==0.25.2",
-                "scipy==1.16.2"]
+dependencies = ["matplotlib==3.10.6", "napari==0.6.5", "numpy==2.3.3", "pandas==2.3.3", "pydicom==3.0.1",
+                "pyqtgraph==0.13.7", "PySide6==6.9.2", "QtPy==2.4.3", "scikit-image==0.25.2", "scipy==1.16.2"]
 
 [project.optional-dependencies]
-dev = ["pytest==9.0.1",
-       "ruff==0.16.1",
-       "mypy==2.3.0"]
+dev = ["pytest==9.0.1", "ruff==0.16.1", "mypy==2.3.0"]
 
 [project.scripts]
 pyrteva = 'pyrteva.main:main'
