@@ -1,4 +1,5 @@
-from pyrteva.plan_evaluation.dosimetric_indices import compute_maximum_dose, compute_mean_dose, compute_Vd, compute_Dv, compute_Dabsv
+from pyrteva.plan_evaluation.dosimetric_indices import (compute_maximum_dose, compute_mean_dose, compute_Vd, compute_Dv,
+                                                        compute_Dabsv)
 
 
 def evaluate_maximum_dose_constraint(oar_dose_volume_histogram, dose_constraint, evaluation_table, row_index):

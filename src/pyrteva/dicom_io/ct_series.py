@@ -1,6 +1,7 @@
+import os
+
 import numpy as np
 import pydicom
-import os
 
 
 def load_ct_series(patient_dir_path):

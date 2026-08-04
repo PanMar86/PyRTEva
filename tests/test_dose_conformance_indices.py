@@ -7,10 +7,11 @@ of the computations.
 """
 
 import pytest
+from mock_data import generate_mock_dose_map, generate_mock_dvh, generate_mock_structures_masks
+
 from pyrteva.plan_evaluation.dose_conformance_indices import (compute_homogeneity_index, compute_conformity_index,
                                                               compute_healthy_tissue_conformity_index,
                                                               compute_conformation_number, compute_gradient_index)
-from mock_data import generate_mock_structures_masks, generate_mock_dose_map, generate_mock_dvh
 
 
 @pytest.fixture(scope="module")

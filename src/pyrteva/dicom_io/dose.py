@@ -1,6 +1,7 @@
+import os
+
 import numpy as np
 import pydicom
-import os
 
 
 def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orientation):

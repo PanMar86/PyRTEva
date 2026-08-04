@@ -1,6 +1,6 @@
-import numpy as np
 import matplotlib
 import napari
+import numpy as np
 from napari.utils import Colormap, colormaps
 
 

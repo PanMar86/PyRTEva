@@ -1,9 +1,10 @@
 from qtpy.QtWidgets import QPushButton
-from pyrteva.gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel,
-                                    generate_status_bar_panel, generate_menu_button, generate_buttonbar)
+
 from pyrteva.gui.callbacks import (load_patient_data, store_user_preferences, generate_intermediate_data,
                                    display_visualisation, display_dose_volume_histograms, display_evaluation_report,
                                    store_treatment_parameters)
+from pyrteva.gui.components import (generate_main_window, generate_viewer_panel, generate_composite_panel,
+                                    generate_status_bar_panel, generate_menu_button, generate_buttonbar)
 
 
 def assemble_gui(data_container):

@@ -1,9 +1,10 @@
-import napari
 from pathlib import Path
-from qtpy.QtWidgets import (QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, QToolButton, QDialog,
-                            QGroupBox, QMenu, QComboBox, QDoubleSpinBox, QScrollArea, QSpinBox, QStatusBar,QTableWidget,
-                            QMessageBox, QTabWidget, QHeaderView, QAbstractItemView, QCheckBox)
+
+import napari
 from qtpy.QtCore import Qt, QSize
+from qtpy.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QGridLayout, QGroupBox,
+                            QHBoxLayout, QHeaderView, QLabel, QMenu, QMessageBox, QPushButton, QScrollArea,
+                            QSpinBox, QStatusBar, QTableWidget, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 
 def generate_main_window():

@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from qtpy.QtWidgets import QApplication
+
 from pyrteva.gui.assembler import assemble_gui
 
 

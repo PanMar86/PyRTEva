@@ -1,5 +1,6 @@
-import pydicom
 import os
+
+import pydicom
 
 
 def load_plan(patient_dir_path, ct_series_frame_of_reference_uid):

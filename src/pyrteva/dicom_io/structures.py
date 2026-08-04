@@ -1,7 +1,8 @@
-import numpy as np
-import pydicom
 import os
 import re
+
+import numpy as np
+import pydicom
 
 
 def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):

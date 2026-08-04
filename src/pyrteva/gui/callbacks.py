@@ -1,22 +1,27 @@
-import napari
-from pathlib import Path
 import pickle
-from qtpy.QtWidgets import QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox, QDoubleSpinBox, QCheckBox
+from pathlib import Path
+
+import napari
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
-from pyrteva.gui.components import generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel, generate_treatment_parameters_window
-from pyrteva.dicom_io.ct_series import load_ct_series
-from pyrteva.dicom_io.structures import load_structures
-from pyrteva.dicom_io.dose import load_dose
-from pyrteva.dicom_io.plan import load_plan
-from pyrteva.dicom_io.validators import validate_directory_structure
-from pyrteva.computations.structures_masks import generate_structures_masks
+from qtpy.QtWidgets import (QApplication, QLabel, QFileDialog, QTableWidget, QTableWidgetItem, QComboBox, QSpinBox,
+                            QDoubleSpinBox, QCheckBox)
+
 from pyrteva.computations.dose_maps import generate_dose_maps
 from pyrteva.computations.dose_volume_histograms import generate_dose_volume_histogram
+from pyrteva.computations.structures_masks import generate_structures_masks
+from pyrteva.dicom_io.ct_series import load_ct_series
+from pyrteva.dicom_io.dose import load_dose
+from pyrteva.dicom_io.plan import load_plan
+from pyrteva.dicom_io.structures import load_structures
+from pyrteva.dicom_io.validators import validate_directory_structure
+from pyrteva.gui.components import (generate_report_tables, generate_user_preferences_window, generate_dvh_control_panel,
+                                    generate_treatment_parameters_window)
+from pyrteva.plan_evaluation.evaluation import (evaluate_dose_constraints, evaluate_dose_conformance,
+                                                evaluate_dosimetric_indices)
+from pyrteva.plan_evaluation.oars_identification import identify_oar_standard_names
 from pyrteva.visualization.anatomy_dose import generate_visualisation
 from pyrteva.visualization.dose_volume_histograms import generate_dose_volume_histogram_plots
-from pyrteva.plan_evaluation.oars_identification import identify_oar_standard_names
-from pyrteva.plan_evaluation.evaluation import evaluate_dose_constraints, evaluate_dose_conformance, evaluate_dosimetric_indices
 
 
 def load_patient_data(data_container, status_bar):

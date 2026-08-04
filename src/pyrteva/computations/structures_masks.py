@@ -1,5 +1,5 @@
-from skimage.draw import polygon
 import numpy as np
+from skimage.draw import polygon
 
 
 def generate_structures_masks(ct_series, ct_series_acquisition_parameters, structures):
