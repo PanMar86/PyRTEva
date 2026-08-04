@@ -1,4 +1,4 @@
-name: PyRTEva CI
+name: CI
 
 on:
   push:
@@ -20,3 +20,17 @@ jobs:
         run: pip install .[dev]
       - name: Run tests
         run: pytest
+  linting_tests:
+    name: Run ruff linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run ruff linter
+        run: ruff check
