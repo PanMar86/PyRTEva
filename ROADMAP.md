@@ -26,8 +26,6 @@ Development priorities might change as the project is continuously evolving.
 - Extension of the dose grid interpolation function (additional CT series - dose grid spatial arrangements)
 - Generalization of the equations mapping 3D space point coordinates to CT series voxels
 - Optimization of the structures masks generation function
-- Creation of CSV files describing dose constraints, and modification 
-  of the associated functions (migrating from pandas dataframes)
 - Handling of GUI freezing during heavy computations
 - Appropriate event handling for multiple napari viewers
 - Update (blank) napari viewers without reinstantiating them
