@@ -308,6 +308,7 @@ def generate_treatment_parameters_window():
     treatment_site.setObjectName("treatment_site")
     treatment_site.addItem("Lung")
     treatment_site.addItem("Brain")
+    treatment_site.addItem("Prostate")
     treatment_site.setCurrentText("Lung")
 
     fractionation_scheme = QComboBox()
