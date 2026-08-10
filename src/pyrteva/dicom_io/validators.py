@@ -1,5 +1,5 @@
 import os
-
+import logging
 
 def validate_directory_structure(patient_dir_path):
     """
@@ -21,6 +21,8 @@ def validate_directory_structure(patient_dir_path):
         The validated patient directory path.
     """
 
+    logger = logging.getLogger(__name__)
+
     # Verify that certain subdirectories exist.
     sub_dirs = os.listdir(patient_dir_path)
 
@@ -28,6 +30,7 @@ def validate_directory_structure(patient_dir_path):
 
         if sub_dir not in sub_dirs:
 
+            logger.error(f"{sub_dir} subdirectory was not found in patient's directory.")
             raise FileNotFoundError(f"{sub_dir} subdirectory was not found in patient's directory.")
 
         # Verify that subdirectories are not empty.
@@ -36,6 +39,7 @@ def validate_directory_structure(patient_dir_path):
 
         if not sub_dir_filenames:
 
+            logger.error(f"{sub_dir} subdirectory is empty.")
             raise FileNotFoundError(f"{sub_dir} subdirectory is empty.")
 
         # Verify that there are unique DICOM RTSTRUCT, RTDOSE and RTPLAN files inside the corresponding subdirectories.
@@ -49,10 +53,12 @@ def validate_directory_structure(patient_dir_path):
 
         if num_dcm_files == 0:
 
+            logger.error(f"No {sub_dir.lower()} files were found in the {sub_dir} subdirectory.")
             raise FileNotFoundError(f"No {sub_dir.lower()} files were found in the {sub_dir} subdirectory.")
 
         elif (num_dcm_files) > 1 and (sub_dir != "CT"):
 
+            logger.error(f"Multiple {sub_dir.lower()} files within the same directory are not supported.")
             raise ValueError(f"Multiple {sub_dir.lower()} files within the same directory are not supported.")
 
     return patient_dir_path
