@@ -15,8 +15,6 @@ def main():
     logging.basicConfig(level=logging.INFO, filename="logs/log.txt",
                         format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 
-    logger = logging.getLogger(__name__)
-
     patients_dir = str(Path(__file__).resolve().parents[0]/"assets"/"sample_data"/"dicom_data")
 
     data_container = {"PatientsDirectory": patients_dir,
@@ -29,8 +27,6 @@ def main():
     app_window = assemble_gui(data_container)
     app_window.showMaximized()
     app.exec()
-
-    logger.info("Application has started.")
 
 if __name__ == "__main__":
     main()

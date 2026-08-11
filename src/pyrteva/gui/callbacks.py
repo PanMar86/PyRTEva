@@ -46,24 +46,24 @@ def load_patient_data(data_container, status_bar):
     ct_series, ct_series_acquisition_parameters = load_ct_series(patient_dir)
     data_container["CTSeries"] = ct_series
     data_container["SeriesAcquisitionParameters"] = ct_series_acquisition_parameters
-    update_status_bar(status_bar, "CT series and series acquisition parameters have been imported successfully.")
+    update_status_bar(status_bar, "CT series and CT series acquisition parameters have been successfully imported.")
 
     update_status_bar(status_bar, "RT structures are being imported. Please wait...")
     structures = load_structures(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
     data_container["Structures"] = structures
-    update_status_bar(status_bar, "RT structures have been imported successfully.")
+    update_status_bar(status_bar, "RT structures have been successfully imported.")
 
     update_status_bar(status_bar, "Dose is being imported...")
     dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
                      data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
     data_container["Dose"] = dose
-    update_status_bar(status_bar, "Dose has been successfully imported.")
+    update_status_bar(status_bar, "Dose distribution and dose grid parameters have been successfully imported.")
 
     update_status_bar(status_bar, "Treatment plan parameters are being imported. Please wait...")
     plan_parameters = load_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
     prescribed_doses = plan_parameters["PrescribedDoses"]
     data_container["PrescribedDoses"] = prescribed_doses
-    update_status_bar(status_bar, "Treatment plan parameters have been imported successfully.")
+    update_status_bar(status_bar, "Treatment plan parameters have been successfully imported.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
 

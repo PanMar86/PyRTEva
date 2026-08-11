@@ -1,4 +1,5 @@
 import os
+import logging
 
 import pydicom
 
@@ -32,6 +33,8 @@ def load_plan(patient_dir_path, ct_series_frame_of_reference_uid):
                 Prescribed dose, expressed in Gy.
     """
 
+    logger = logging.getLogger(__name__)
+
     plan_dir = os.path.join(patient_dir_path, "RTPLAN")
 
     filenames = os.listdir(plan_dir)
@@ -51,6 +54,7 @@ def load_plan(patient_dir_path, ct_series_frame_of_reference_uid):
 
     if plan_data.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
 
+        logger.error("There was a frame of reference mismatch. Different frames of reference are not supported.")
         raise ValueError("There was a frame of reference mismatch. Different frames of reference are not supported.")
 
     prescribed_doses = []
@@ -62,5 +66,7 @@ def load_plan(patient_dir_path, ct_series_frame_of_reference_uid):
                                  "PrescribedDose" : plan_data.DoseReferenceSequence[index].TargetPrescriptionDose})
 
     plan_parameters = {"PrescribedDoses" : prescribed_doses}
+
+    logger.info("Treatment plan parameters have been successfully imported.")
 
     return plan_parameters
