@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib
 import napari
 import numpy as np
@@ -47,6 +49,8 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
         Configured napari viewer containing layers dictated by the visualization and display modes.
     """
 
+    logger = logging.getLogger(__name__)
+
     # Set up some custom colormaps before the viewer creation.
     custom_colormaps = generate_custom_colormaps()
     colormaps.AVAILABLE_COLORMAPS.clear()
@@ -92,6 +96,8 @@ def generate_visualisation(ct_series, ct_series_acquisition_parameters, structur
 
     # Re-order the CT Series layer.
     viewer.layers.move(viewer.layers.index("CT Series"), 0)
+
+    logger.info(f"{display_mode} {visualization_mode} visualization mode has been enabled.")
 
     return viewer
 
