@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from skimage.draw import polygon
 
@@ -37,6 +39,8 @@ def generate_structures_masks(ct_series, ct_series_acquisition_parameters, struc
             3D binary mask of the structure across all corresponding slices.
     """
 
+    logger = logging.getLogger(__name__)
+
     slice_origin = ct_series_acquisition_parameters["ImagePlanarPositionPatient"]
     slice_dimensions = ct_series_acquisition_parameters["ImageDimensions"]
     in_plane_spacing = ct_series_acquisition_parameters["PixelSpacing"]
@@ -74,6 +78,8 @@ def generate_structures_masks(ct_series, ct_series_acquisition_parameters, struc
                                  "StructureType": structure["StructureType"],
                                  "PlanarMasksOnReferencedImages": structure_merged_planar_masks,
                                  "VolumetricMask": volumetric_mask})
+
+    logger.info("Structures masks have been successfully generated.")
 
     return structures_masks
 

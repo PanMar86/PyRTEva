@@ -83,7 +83,7 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
                            "StructureType": structure_type,
                            "ContoursOnReferencedImages" : contours})
 
-    logger.info(f"{len(structures)} RT structures have been successfully imported.")
+    logger.info("RT structures have been successfully imported.")
 
     return structures
 

@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
@@ -39,17 +41,23 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_g
             3D dose map, aligned to the CT series.
     """
 
+    logger = logging.getLogger(__name__)
+
     # Determine the alignment type (if any).
     planar_alignment = verify_planar_alignment(ct_series_acquisition_parameters, dose)
     z_axis_alignment = verify_z_axis_alignment(ct_series, ct_series_acquisition_parameters, dose)
 
     if planar_alignment and (not z_axis_alignment):
 
+        logger.error("The dose grid and the CT series are planarly aligned but not z axis aligned.\n"
+                     "Volume (3D) interpolation is not currently supported.")
         raise ValueError("The dose grid and the CT series are planarly aligned but not z axis aligned.\n"
                          "Volume (3D) interpolation is not currently supported.")
 
     elif not planar_alignment and (not z_axis_alignment):
 
+        logger.error("The dose grid and the CT series are neither planarly nor z axis aligned.\n"
+                     "Volume (3D) interpolation is not currently supported.")
         raise ValueError("The dose grid and the CT series are neither planarly nor z axis aligned.\n"
                          "Volume (3D) interpolation is not currently supported.")
 
@@ -134,6 +142,8 @@ def generate_dose_maps(ct_series, ct_series_acquisition_parameters, dose, dose_g
 
         dose_maps = {"PlanarDoseMaps": planar_dose_maps,
                      "VolumetricDoseMap": volumetric_dose_map}
+
+        logger.info("Planar and volumetric dose maps have been successfully generated.")
 
         return dose_maps
 
@@ -251,6 +261,8 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
         slices of the CT series, False otherwise.
     """
 
+    logger = logging.getLogger(__name__)
+
     # Calculate the differences between the offsets.
     offsets_differences = np.diff(grid_frame_offset_vector)
 
@@ -271,6 +283,7 @@ def verify_z_axis_spacing_equality(grid_frame_offset_vector, ct_series_acquisiti
 
     else:
 
+        logger.error("Dose grid plane spacing is not constant. Non constant plane spacing is not supported.")
         raise ValueError("Dose grid plane spacing is not constant. Non constant plane spacing is not supported.")
 
     return z_axis_spacing_equality

@@ -145,13 +145,13 @@ def generate_intermediate_data(data_container, status_bar):
     update_status_bar(status_bar, "Structures masks are being generated. Please wait...")
     structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"], data_container["Structures"])
     data_container["Masks"] = structures_masks
-    update_status_bar(status_bar, "Structures masks have been generated successfully.")
+    update_status_bar(status_bar, "Structures masks have been successfully generated.")
 
     update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
     dose_maps = generate_dose_maps(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
                                    data_container["Dose"], data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"])
     data_container["DoseMaps"] = dose_maps
-    update_status_bar(status_bar, "Dose maps have been generated successfully.")
+    update_status_bar(status_bar, "Dose maps have been successfully generated.")
 
     dose_volume_histograms = generate_dose_volume_histogram(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
                                                             data_container["DoseMaps"]["VolumetricDoseMap"], data_container["AlgorithmsSettings"]["DoseBinWidth"],

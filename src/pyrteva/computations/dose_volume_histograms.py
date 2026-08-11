@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 
@@ -53,6 +55,8 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
             Dose bin width, expressed in Gy.
     """
 
+    logger = logging.getLogger(__name__)
+
     # Determine the structures that will be included in the generated dose volume histograms.
     if additional_structures_inclusion:
 
@@ -101,5 +105,7 @@ def generate_dose_volume_histogram(ct_series_acquisition_parameters, structures_
                                            "VoxelVolumeInCubicCentimeters" : voxel_volume_cc,
                                            "DoseBinEdges" : bin_edges,
                                            "DoseBinWidth" : dose_bin_width})
+
+    logger.info("Dose volume histograms have been successfully generated.")
 
     return dose_volume_histograms
