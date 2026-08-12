@@ -8,14 +8,15 @@ from pyrteva.gui.assembler import assemble_gui
 
 def main():
     """
-    This function initializes the data and function settings containers (used by the callback functions), assembles the
-    graphical user interface (gui) and launches it.
+    This function acts as the application's entry point.
     """
 
-    logging.basicConfig(level=logging.INFO, filename="logs/log.txt",
+    logs_dir = Path(Path.home()/"pyrteva_logs")
+    Path.mkdir(logs_dir, exist_ok = True)
+    logging.basicConfig(level=logging.INFO, filename=logs_dir/"log.txt",
                         format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 
-    patients_dir = str(Path(__file__).resolve().parents[0]/"assets"/"sample_data"/"dicom_data")
+    patients_dir = Path(__file__).resolve().parents[0]/"assets"/"sample_data"/"dicom_data"
 
     data_container = {"PatientsDirectory": patients_dir,
                       "AlgorithmsSettings": {"DoseGridInterpolationMethod": None, "DoseBinWidth": None, "ReferenceIsodose": None},

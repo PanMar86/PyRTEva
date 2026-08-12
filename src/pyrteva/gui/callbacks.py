@@ -38,7 +38,7 @@ def load_patient_data(data_container, status_bar):
     """
 
     patient_dir =  validate_directory_structure(QFileDialog.getExistingDirectory(None, "Select Patient Folder",
-                                                                                 data_container["PatientsDirectory"]))
+                                                                                 str(data_container["PatientsDirectory"])))
 
     update_status_bar(status_bar, "Patient data is being imported. Please wait...")
 
