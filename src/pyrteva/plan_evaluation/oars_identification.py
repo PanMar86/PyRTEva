@@ -1,3 +1,5 @@
+import logging
+
 from pyrteva.plan_evaluation.oars_lookup_table import oars_encountered_names
 
 
@@ -14,11 +16,16 @@ def identify_oar_standard_names(dose_volume_histograms, treatment_site):
         Treatment site.
     """
 
+    logger = logging.getLogger(__name__)
+
     oars_standard_names = []
+    num_oars = 0
 
     for dvh in dose_volume_histograms:
 
         if dvh["StructureType"] == "Organ At Risk":
+
+            num_oars += 1
 
             for oar_standard_name, oar_encountered_names in oars_encountered_names.items():
 
@@ -29,8 +36,10 @@ def identify_oar_standard_names(dose_volume_histograms, treatment_site):
 
                     break
 
-    search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site)
+    logger.info(f"They have been identified {len(oars_standard_names)} OARs (out of {num_oars}) and they have been"
+                f" assigned with their standard name.")
 
+    search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site)
 
 
 def search_for_special_structures(dose_volume_histograms, oars_standard_names, treatment_site):

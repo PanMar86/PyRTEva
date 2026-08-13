@@ -38,7 +38,7 @@ def load_patient_data(data_container, status_bar):
     """
 
     patient_dir =  validate_directory_structure(QFileDialog.getExistingDirectory(None, "Select Patient Folder",
-                                                                                 data_container["PatientsDirectory"]))
+                                                                                 str(data_container["PatientsDirectory"])))
 
     update_status_bar(status_bar, "Patient data is being imported. Please wait...")
 
@@ -46,24 +46,24 @@ def load_patient_data(data_container, status_bar):
     ct_series, ct_series_acquisition_parameters = load_ct_series(patient_dir)
     data_container["CTSeries"] = ct_series
     data_container["SeriesAcquisitionParameters"] = ct_series_acquisition_parameters
-    update_status_bar(status_bar, "CT series and series acquisition parameters have been imported successfully.")
+    update_status_bar(status_bar, "CT series and CT series acquisition parameters have been successfully imported.")
 
     update_status_bar(status_bar, "RT structures are being imported. Please wait...")
     structures = load_structures(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
     data_container["Structures"] = structures
-    update_status_bar(status_bar, "RT structures have been imported successfully.")
+    update_status_bar(status_bar, "RT structures have been successfully imported.")
 
     update_status_bar(status_bar, "Dose is being imported...")
     dose = load_dose(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"],
                      data_container["SeriesAcquisitionParameters"]["ImageOrientationPatient"])
     data_container["Dose"] = dose
-    update_status_bar(status_bar, "Dose has been successfully imported.")
+    update_status_bar(status_bar, "Dose distribution and dose grid parameters have been successfully imported.")
 
     update_status_bar(status_bar, "Treatment plan parameters are being imported. Please wait...")
     plan_parameters = load_plan(patient_dir, data_container["SeriesAcquisitionParameters"]["FrameOfReferenceUID"])
     prescribed_doses = plan_parameters["PrescribedDoses"]
     data_container["PrescribedDoses"] = prescribed_doses
-    update_status_bar(status_bar, "Treatment plan parameters have been imported successfully.")
+    update_status_bar(status_bar, "Treatment plan parameters have been successfully imported.")
 
     update_status_bar(status_bar, "Patient data has been successfully imported.")
 
@@ -145,13 +145,13 @@ def generate_intermediate_data(data_container, status_bar):
     update_status_bar(status_bar, "Structures masks are being generated. Please wait...")
     structures_masks = generate_structures_masks(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"], data_container["Structures"])
     data_container["Masks"] = structures_masks
-    update_status_bar(status_bar, "Structures masks have been generated successfully.")
+    update_status_bar(status_bar, "Structures masks have been successfully generated.")
 
     update_status_bar(status_bar, "Dose maps are being generated. Please wait...")
     dose_maps = generate_dose_maps(data_container["CTSeries"], data_container["SeriesAcquisitionParameters"],
                                    data_container["Dose"], data_container["AlgorithmsSettings"]["DoseGridInterpolationMethod"])
     data_container["DoseMaps"] = dose_maps
-    update_status_bar(status_bar, "Dose maps have been generated successfully.")
+    update_status_bar(status_bar, "Dose maps have been successfully generated.")
 
     dose_volume_histograms = generate_dose_volume_histogram(data_container["SeriesAcquisitionParameters"], data_container["Masks"],
                                                             data_container["DoseMaps"]["VolumetricDoseMap"], data_container["AlgorithmsSettings"]["DoseBinWidth"],

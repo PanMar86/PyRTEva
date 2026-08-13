@@ -1,3 +1,5 @@
+import logging
+
 import pyqtgraph as pg
 
 
@@ -17,6 +19,8 @@ def generate_dose_volume_histogram_plots(dose_volume_histograms):
         Object containing the rendered dose volume histogram figures. This widget will be embedded (in a later stage)
         in a Qt-based gui layout.
     """
+
+    logger = logging.getLogger(__name__)
 
     dvhs_plot = pg.PlotWidget()
     dvhs_plot.setObjectName("dvh_plots")
@@ -41,5 +45,7 @@ def generate_dose_volume_histogram_plots(dose_volume_histograms):
         color = pg.intColor(color_index, hues = len(dose_volume_histograms), alpha = 150)
         dvh_plot = dvhs_plot.plot(x, y, pen = color)
         dvh_plot.setObjectName(label.lower())
+
+    logger.info("Dose volume histograms have been plotted.")
 
     return dvhs_plot

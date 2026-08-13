@@ -1,4 +1,5 @@
 import os
+import logging
 
 import numpy as np
 import pydicom
@@ -49,6 +50,8 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
             coordinate system, expressed in mm.
     """
 
+    logger = logging.getLogger(__name__)
+
     dose_dir = os.path.join(patient_dir_path, "RTDOSE")
 
     filenames = os.listdir(dose_dir)
@@ -68,10 +71,13 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
 
     if dose_data.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
 
+        logger.error("There was a frame of reference mismatch. Different frames of reference are not supported.")
         raise ValueError("There was a frame of reference mismatch. Different frames of reference are not supported.")
 
     if not np.allclose(dose_data.ImageOrientationPatient, ct_series_orientation, rtol = 0, atol = 0.01):
 
+        logger.error("There was an orientation mismatch. Dose grids that have different spatial orientation than\n"
+                     "the CT series (with respect to the patient's coordinate system) are not supported.")
         raise ValueError("There was an orientation mismatch. Dose grids that have different spatial orientation than\n"
                          "the CT series (with respect to the patient's coordinate system) are not supported.")
 
@@ -86,5 +92,7 @@ def load_dose(patient_dir_path, ct_series_frame_of_reference_uid, ct_series_orie
             "DoseGridFrameOffsetVector" : dose_data.GridFrameOffsetVector,
             "DoseGridOrientationPatient" : dose_data.ImageOrientationPatient,
             "DoseGridPositionPatient" : dose_data.ImagePositionPatient}
+
+    logger.info("Dose distribution and dose grid parameters have been successfully imported.")
 
     return dose

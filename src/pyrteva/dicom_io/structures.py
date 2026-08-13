@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 
 import numpy as np
 import pydicom
@@ -35,6 +36,8 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
                 Unique identifier of the slice to which this contour corresponds.
     """
 
+    logger = logging.getLogger(__name__)
+
     structures_dir = os.path.join(patient_dir_path, "RTSTRUCT")
 
     filenames = os.listdir(structures_dir)
@@ -54,6 +57,7 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
 
     if structures_data.FrameOfReferenceUID != ct_series_frame_of_reference_uid:
 
+        logger.error("There was a frame of reference mismatch. Different frames of reference are not supported.")
         raise ValueError("There was a frame of reference mismatch. Different frames of reference are not supported.")
 
     structures = []
@@ -78,6 +82,8 @@ def load_structures(patient_dir_path, ct_series_frame_of_reference_uid):
         structures.append({"StructureName" : structure_name,
                            "StructureType": structure_type,
                            "ContoursOnReferencedImages" : contours})
+
+    logger.info("RT structures have been successfully imported.")
 
     return structures
 

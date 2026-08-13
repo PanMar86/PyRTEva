@@ -1,4 +1,5 @@
 import os
+import logging
 
 import numpy as np
 import pydicom
@@ -46,6 +47,8 @@ def load_ct_series(patient_dir_path):
             Unique identifier of the patient's coordinate system.
     """
 
+    logger = logging.getLogger(__name__)
+
     ct_series_dir = os.path.join(patient_dir_path, "CT")
 
     filenames = os.listdir(ct_series_dir)
@@ -72,9 +75,10 @@ def load_ct_series(patient_dir_path):
     # Sort the slices superior to inferior.
     ct_series = sorted(ct_series, key=lambda x: x["ImagePositionPatient"][2], reverse=True)
 
-    # Extract the acquisition parameters from the last slice of the series (since all slices belong to the series,
-    # they share the same parameters).
-    ct_series_acquisition_parameters = {"ImageDimensions" : [ct_slice_data.Rows, ct_slice_data.Columns],
+    # Extract the acquisition parameters as well as the patient's ID from the last slice of the series
+    # (since all slices belong to the series, they share the same parameters).
+    ct_series_acquisition_parameters = {"PatientID" : ct_slice_data.PatientID,
+                                        "ImageDimensions" : [ct_slice_data.Rows, ct_slice_data.Columns],
                                         "ImagePlanarPositionPatient": ct_slice_data.ImagePositionPatient[:2],
                                         "PixelSpacing" : ct_slice_data.PixelSpacing,
                                         "SliceThickness" : ct_slice_data.SliceThickness,
@@ -101,19 +105,26 @@ def load_ct_series(patient_dir_path):
 
         else:
 
+            logger.error("CT series of non constant slice spacing is not supported.")
             raise ValueError("CT series of non constant slice spacing is not supported.")
 
     # Check if the CT series consists of adjacent slices.
     if not np.allclose(ct_series_acquisition_parameters["SliceThickness"],
                        ct_series_acquisition_parameters["SpacingBetweenSlices"], rtol = 0, atol = 0.01):
 
+        logger.error("Non adjacent slices are not supported.")
         raise ValueError("Non adjacent slices are not supported.")
 
     # Check ImageOrientationPatient and PatientPosition DICOM attribute values.
     if not (np.allclose(ct_series_acquisition_parameters["ImageOrientationPatient"], [1, 0, 0, 0, 1, 0], rtol = 0, atol = 0.01) and
             ct_series_acquisition_parameters["PatientPosition"] == "HFS"):
 
+        logger.error("Only CT series with ImageOrientationPatient DICOM attribute equal to [1, 0, 0, 0, 1, 0]\n"
+                     "and PatientPosition DICOM attribute equal to 'HFS' are supported.")
         raise ValueError("Only CT series with ImageOrientationPatient DICOM attribute equal to [1, 0, 0, 0, 1, 0]\n"
                          "and PatientPosition DICOM attribute equal to 'HFS' are supported.")
+
+    logger.info(f"Patient with ID {ct_series_acquisition_parameters["PatientID"]} has been selected.")
+    logger.info("CT series and CT series acquisition parameters have been successfully imported.")
 
     return ct_series, ct_series_acquisition_parameters
