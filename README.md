@@ -65,11 +65,11 @@ pyrteva
 
 Initialize a new python project.
 ```
-uv init PyRTEva --python 3.13
+uv init project_name --python 3.13
 ```
 Move to the project directory.
 ```
-cd PyRTEva
+cd project_name
 ```
 Install through GitHub.
 ```
