@@ -45,20 +45,35 @@ Moreover, different implementation of the algorithms related to structures masks
 
 ## Installation instructions
 
+### Using conda and pip
+
 Create a virtual environment and activate it.
 ```
 conda create -n PyRTEva python=3.13
 conda activate PyRTEva
 ```
-
 Install through GitHub.
 ```
 pip install git+https://github.com/PanMar86/PyRTEva.git
 ```
-
 Launch the GUI.
 ```
 pyrteva
+```
+
+### Using uv
+
+Initialize a new python project.
+```
+uv init PyRTEva --python 3.13
+```
+Install through GitHub.
+```
+uv add git+https://github.com/PanMar86/PyRTEva.git
+```
+Launch the GUI.
+```
+uv run pyrteva
 ```
 
 
