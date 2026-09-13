@@ -67,6 +67,10 @@ Initialize a new python project.
 ```
 uv init PyRTEva --python 3.13
 ```
+Move to the project directory.
+```
+cd PyRTEva
+```
 Install through GitHub.
 ```
 uv add git+https://github.com/PanMar86/PyRTEva.git
